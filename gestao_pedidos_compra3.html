@@ -1,0 +1,2383 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acompanhamento Pedidos de Compra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1c2b36;
+    --paper:#f6f4ef;
+    --paper2:#ffffff;
+    --line:#d8d3c8;
+    --line-strong:#b9b2a2;
+    --accent:#35606b;
+    --accent-dark:#24444d;
+    --good:#2f7a4f;
+    --good-bg:#e7f1ea;
+    --warn:#96690a;
+    --warn-bg:#f6ecd6;
+    --bad:#a63e2c;
+    --bad-bg:#f5e4df;
+    --overdue-bg:#f4c9bd;
+    --muted:#6b6459;
+    --font-serif:'Spectral', serif;
+    --font-sans:'IBM Plex Sans', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-sans);
+    font-feature-settings:"tnum" 1, "lnum" 1;
+    -webkit-font-smoothing:antialiased;
+  }
+  .num{font-variant-numeric:tabular-nums;}
+  .hidden{display:none !important;}
+
+  /* ---------- Login ---------- */
+  #login-screen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:var(--ink); padding:20px;
+  }
+  .login-card{
+    background:var(--paper2); width:100%; max-width:360px;
+    border:1px solid var(--line-strong); padding:34px 30px 28px;
+    box-shadow:0 16px 40px rgba(0,0,0,.3);
+  }
+  .login-card .mark{
+    font-family:var(--font-serif); font-size:13px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:6px;
+  }
+  .login-card h1{
+    font-family:var(--font-serif); font-size:22px; font-weight:600; margin:0 0 22px;
+  }
+  .login-card .field{margin-bottom:14px;}
+  .login-card label{display:block; font-size:12px; color:var(--muted); margin-bottom:5px; font-weight:600;}
+  .login-card input{
+    width:100%; font-family:inherit; font-size:14.5px;
+    padding:9px 11px; border:1px solid var(--line-strong); border-radius:2px; background:var(--paper2); color:var(--ink);
+  }
+  .login-card button{
+    width:100%; margin-top:10px; background:var(--accent); color:#fff; border:none;
+    font-family:inherit; font-weight:600; font-size:14px; padding:11px 18px; cursor:pointer; border-radius:2px;
+  }
+  .login-card button:hover{background:var(--accent-dark);}
+  .login-error{
+    color:var(--bad); font-size:12.5px; margin-top:12px; min-height:16px;
+  }
+
+  header.masthead{
+    border-bottom:2px solid var(--ink);
+    padding:28px 32px 16px;
+    background:var(--paper2);
+  }
+  header.masthead .row{
+    display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:8px;
+    max-width:1520px; margin:0 auto;
+  }
+  header.masthead h1{
+    font-family:var(--font-serif);
+    font-weight:600;
+    font-size:28px;
+    margin:0;
+    letter-spacing:0.2px;
+  }
+  header.masthead p{
+    margin:4px 0 0;
+    color:var(--muted);
+    font-size:13.5px;
+  }
+  header.masthead .today{
+    font-size:12.5px; color:var(--muted); text-align:right; line-height:1.6;
+  }
+  header.masthead .today button{
+    background:none; border:none; color:var(--accent); font-family:inherit; font-size:12.5px;
+    font-weight:600; cursor:pointer; padding:0; text-decoration:underline;
+  }
+
+  nav.tabs{
+    max-width:1520px; margin:0 auto; padding:0 32px;
+    display:flex; gap:2px; border-bottom:1px solid var(--line);
+    background:var(--paper2); flex-wrap:wrap;
+  }
+  nav.tabs button{
+    background:none; border:none; cursor:pointer;
+    font-family:var(--font-sans);
+    font-size:14.5px; font-weight:600;
+    color:var(--muted);
+    padding:14px 4px; margin-right:28px;
+    border-bottom:3px solid transparent;
+  }
+  nav.tabs button.active{
+    color:var(--ink);
+    border-bottom-color:var(--accent);
+  }
+
+  main{max-width:1520px; margin:0 auto; padding:26px 32px 80px;}
+  section.view{display:none;}
+  section.view.active{display:block;}
+
+  .toolbar{
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:14px; margin-bottom:18px;
+  }
+  .filters{display:flex; gap:10px; flex-wrap:wrap;}
+  .filters input, .filters select{
+    font-family:inherit; font-size:13px;
+    padding:7px 10px; border:1px solid var(--line-strong); background:var(--paper2);
+    color:var(--ink); border-radius:2px;
+  }
+  .filters input{min-width:170px;}
+  .toolbar-actions{display:flex; gap:10px; flex-wrap:wrap;}
+
+  button.primary{
+    background:var(--accent); color:#fff; border:none;
+    font-family:inherit; font-weight:600; font-size:13.5px;
+    padding:10px 18px; cursor:pointer; border-radius:2px;
+  }
+  button.primary:hover{background:var(--accent-dark);}
+  button.primary:disabled{opacity:.5; cursor:not-allowed; background:var(--accent);}
+  button.ghost{
+    background:none; border:1px solid var(--line-strong); color:var(--ink);
+    font-family:inherit; font-size:12.5px; padding:5px 10px; cursor:pointer; border-radius:2px;
+  }
+  button.ghost:hover{border-color:var(--ink);}
+  button.link{
+    background:none; border:none; color:var(--accent); cursor:pointer;
+    font-family:inherit; font-size:12.5px; font-weight:600; padding:0; text-decoration:underline;
+  }
+  button.link.danger{color:var(--bad);}
+
+  .summary-strip{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line); margin-bottom:22px;
+  }
+  .summary-strip .cell{background:var(--paper2); padding:14px 18px;}
+  .summary-strip .cell .label{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;}
+  .summary-strip .cell .value{font-family:var(--font-serif); font-size:22px; font-weight:600; margin-top:4px;}
+
+  .legend-status{
+    display:flex; gap:14px; flex-wrap:wrap; margin-bottom:14px; font-size:11.5px; color:var(--muted);
+  }
+  .legend-status span{display:inline-flex; align-items:center; gap:5px;}
+  .legend-status .sw{width:11px; height:11px; border-radius:2px; display:inline-block;}
+  .legend-status .sw.overdue{background:var(--overdue-bg); box-shadow:inset 0 0 0 1px var(--bad);}
+
+  table{width:100%; border-collapse:collapse; background:var(--paper2);}
+  thead th{
+    text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:.03em;
+    color:var(--muted); font-weight:600; padding:9px 12px;
+    border-bottom:2px solid var(--ink); white-space:nowrap;
+    cursor:pointer; user-select:none;
+  }
+  thead th.num-col, tbody td.num-col, tfoot td.num-col{text-align:right;}
+  thead th span.arrow{font-size:10px; margin-left:3px; opacity:.6;}
+  tbody td{
+    padding:10px 12px; border-bottom:1px solid rgba(28,43,54,.12); font-size:13.5px; vertical-align:top;
+  }
+  tfoot td{
+    padding:10px 12px; font-size:13.5px; vertical-align:top;
+  }
+  tbody tr:hover{filter:brightness(0.95);}
+  tbody td.desc{max-width:220px; color:var(--muted); font-size:12.8px;}
+  .pill{
+    display:inline-block; font-size:11.5px; font-weight:600; padding:3px 9px;
+    border-radius:12px; white-space:nowrap; background:rgba(255,255,255,.6);
+  }
+  .pill.overdue-pill{background:var(--bad); color:#fff;}
+
+  .pct-badge{font-weight:700;}
+  .pct-badge.good{color:var(--good);}
+  .pct-badge.warn{color:var(--warn);}
+  .pct-badge.bad{color:var(--bad);}
+
+  .actions-col{white-space:nowrap;}
+  .empty-row td{
+    padding:36px 12px; text-align:center; color:var(--muted); font-size:13.5px;
+  }
+
+  /* Tabela de Pedidos: layout fixo por coluna, para que todas apareçam sem rolagem horizontal */
+  #tbl-pedidos{table-layout:fixed;}
+  #tbl-pedidos thead th{
+    white-space:normal; overflow-wrap:break-word; font-size:10.5px; padding:8px 7px; line-height:1.25;
+  }
+  #tbl-pedidos tbody td{
+    white-space:normal; overflow-wrap:break-word; word-break:break-word; font-size:11.8px; padding:7px 7px;
+  }
+  #tbl-pedidos td.desc{max-width:none; font-size:11.3px;}
+  #tbl-pedidos .actions-col{white-space:nowrap; text-align:center; padding:7px 4px;}
+  #tbl-pedidos .icon-btn{
+    background:none; border:none; cursor:pointer; font-size:13px; padding:2px 3px; line-height:1;
+  }
+  #tbl-pedidos th:nth-child(1),  #tbl-pedidos td:nth-child(1){width:6.5%;}
+  #tbl-pedidos th:nth-child(2),  #tbl-pedidos td:nth-child(2){width:6.5%;}
+  #tbl-pedidos th:nth-child(3),  #tbl-pedidos td:nth-child(3){width:8%;}
+  #tbl-pedidos th:nth-child(4),  #tbl-pedidos td:nth-child(4){width:8%;}
+  #tbl-pedidos th:nth-child(5),  #tbl-pedidos td:nth-child(5){width:13%;}
+  #tbl-pedidos th:nth-child(6),  #tbl-pedidos td:nth-child(6){width:7%;}
+  #tbl-pedidos th:nth-child(7),  #tbl-pedidos td:nth-child(7){width:7%;}
+  #tbl-pedidos th:nth-child(8),  #tbl-pedidos td:nth-child(8){width:6%;}
+  #tbl-pedidos th:nth-child(9),  #tbl-pedidos td:nth-child(9){width:6%;}
+  #tbl-pedidos th:nth-child(10), #tbl-pedidos td:nth-child(10){width:8%;}
+  #tbl-pedidos th:nth-child(11), #tbl-pedidos td:nth-child(11){width:8%;}
+  #tbl-pedidos th:nth-child(12), #tbl-pedidos td:nth-child(12){width:7%;}
+  #tbl-pedidos th:nth-child(13), #tbl-pedidos td:nth-child(13){width:6%;}
+  #tbl-pedidos th:nth-child(14), #tbl-pedidos td:nth-child(14){width:4%;}
+
+  /* Modal */
+  .overlay{
+    position:fixed; inset:0; background:rgba(28,43,54,.45);
+    display:none; align-items:flex-start; justify-content:center;
+    padding:40px 16px; overflow-y:auto; z-index:50;
+  }
+  .overlay.open{display:flex;}
+  .modal{
+    background:var(--paper2); width:100%; max-width:640px;
+    border:1px solid var(--line-strong);
+    box-shadow:0 12px 32px rgba(0,0,0,.18);
+  }
+  .modal-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:18px 24px; border-bottom:1px solid var(--line);
+  }
+  .modal-head h2{font-family:var(--font-serif); font-size:19px; margin:0; font-weight:600;}
+  .modal-head button{background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted); line-height:1;}
+  form#pedido-form{padding:20px 24px 24px;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .field{margin-bottom:14px;}
+  .field.full{grid-column:1/-1;}
+  .field label{display:block; font-size:12px; color:var(--muted); margin-bottom:5px; font-weight:600;}
+  .field input, .field select, .field textarea{
+    width:100%; font-family:inherit; font-size:14px;
+    padding:8px 10px; border:1px solid var(--line-strong); border-radius:2px; background:var(--paper2); color:var(--ink);
+  }
+  .field textarea{resize:vertical; min-height:44px;}
+  .modal-footer{display:flex; justify-content:flex-end; gap:10px; margin-top:6px;}
+  .checklist{display:flex; flex-direction:column; gap:9px; font-size:13.5px; margin-top:2px;}
+  .checklist label{display:flex; align-items:center; gap:8px; font-weight:400; color:var(--ink); cursor:pointer;}
+  .checklist input{width:auto;}
+
+  /* Report */
+  .report-head{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;}
+  .report-head h2{font-family:var(--font-serif); font-size:21px; margin:0; font-weight:600;}
+  .report-head select{font-family:inherit; font-size:13.5px; padding:7px 10px; border:1px solid var(--line-strong); border-radius:2px;}
+  .report-filters{display:flex; gap:10px; flex-wrap:wrap;}
+  .report-head select:disabled{opacity:.5; cursor:not-allowed;}
+
+  .quarter-table{margin-bottom:30px;}
+  .quarter-table td.q-name{font-weight:600; font-family:var(--font-serif); font-size:15px;}
+  .quarter-table tfoot td{border-top:2px solid var(--ink); border-bottom:none; font-weight:700;}
+
+  .chart-wrap{background:var(--paper2); border:1px solid var(--line); padding:20px 24px 8px; margin-bottom:30px;}
+  .chart-wrap h3{font-family:var(--font-serif); font-size:16px; margin:0 0 14px; font-weight:600;}
+  .legend{display:flex; gap:18px; font-size:12px; color:var(--muted); margin-bottom:10px;}
+  .legend span{display:inline-flex; align-items:center; gap:6px;}
+  .legend .sw{width:11px; height:11px; display:inline-block; border-radius:2px;}
+
+  .note-empty{
+    border:1px dashed var(--line-strong); padding:40px 20px; text-align:center; color:var(--muted); font-size:13.5px;
+  }
+
+  /* Cadastros */
+  .cad-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:20px;}
+  .cad-card{background:var(--paper2); border:1px solid var(--line);}
+  .cad-card h3{
+    font-family:var(--font-serif); font-size:16px; font-weight:600; margin:0;
+    padding:14px 18px; border-bottom:1px solid var(--line);
+  }
+  .cad-card .hint{padding:0 18px; margin:10px 0 0; font-size:11.5px; color:var(--muted);}
+  .cad-add{display:flex; gap:8px; padding:14px 18px; border-bottom:1px solid var(--line);}
+  .cad-add input{
+    flex:1; font-family:inherit; font-size:13.5px; padding:8px 10px;
+    border:1px solid var(--line-strong); border-radius:2px;
+  }
+  .cad-list{list-style:none; margin:0; padding:6px 0; max-height:340px; overflow-y:auto;}
+  .cad-list li{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    padding:9px 18px; font-size:13.5px; border-bottom:1px solid #f0eee6;
+  }
+  .cad-list li:last-child{border-bottom:none;}
+  .cad-list .item-left{display:flex; align-items:center; gap:8px; min-width:0;}
+  .cad-list .sw{width:10px; height:10px; border-radius:50%; flex:none;}
+  .cad-list .item-name{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cad-list .final-toggle{
+    display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted); white-space:nowrap;
+  }
+  .cad-list .right-actions{display:flex; align-items:center; gap:12px; flex:none;}
+  .cad-empty{padding:16px 18px; color:var(--muted); font-size:12.5px;}
+
+  .config-grid{grid-template-columns:1fr;}
+  .config-body{padding:16px 18px 18px;}
+  .config-actions{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
+  .config-note{font-size:12px; color:var(--muted); margin:6px 0 0; line-height:1.5;}
+  .swatch-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:4px;}
+  .swatch-btn{
+    width:32px; height:32px; border-radius:50%; border:2px solid transparent;
+    cursor:pointer; padding:0; box-shadow:inset 0 0 0 1px rgba(0,0,0,.1);
+  }
+  .swatch-btn.selected{border-color:var(--ink); box-shadow:0 0 0 2px var(--paper2), 0 0 0 4px var(--ink);}
+  .config-body select{
+    font-family:inherit; font-size:13.5px; padding:8px 10px;
+    border:1px solid var(--line-strong); border-radius:2px; background:var(--paper2); color:var(--ink);
+    max-width:300px; width:100%;
+  }
+  .config-label{display:block; font-size:12px; color:var(--muted); font-weight:600; margin:0 0 8px;}
+
+  footer{
+    max-width:1520px; margin:0 auto; padding:14px 32px 40px; color:var(--muted); font-size:11.5px; border-top:1px solid var(--line);
+  }
+
+  .modal.narrow{max-width:440px;}
+
+  /* Impressão */
+  #print-area{display:none;}
+  .print-header{margin-bottom:20px; border-bottom:2px solid #1c2b36; padding-bottom:10px;}
+  .print-header h1{font-family:var(--font-serif); font-size:19px; margin:0 0 4px;}
+  .print-header p{font-size:11px; color:#555; margin:0;}
+  .print-block{margin-bottom:30px; page-break-inside:avoid;}
+  .print-block h2{font-family:var(--font-serif); font-size:15.5px; margin:0 0 10px; border-bottom:1px solid #ccc; padding-bottom:5px;}
+  .print-empty{font-size:12px; color:#666; font-style:italic;}
+  .print-summary{display:flex; gap:20px; flex-wrap:wrap; margin-bottom:14px; font-size:12px; color:#333;}
+  .print-pedidos-table{width:100%; border-collapse:collapse; font-size:9.5px;}
+  .print-pedidos-table th, .print-pedidos-table td{border:1px solid #ccc; padding:4px 6px; text-align:left; vertical-align:top;}
+  .print-pedidos-table th{background:#eee; text-transform:uppercase; font-size:8px; letter-spacing:.02em;}
+  .print-pedidos-table td.num-col, .print-pedidos-table th.num-col{text-align:right;}
+
+  @media print{
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    @page { size: A4 landscape; margin: 12mm; }
+    #login-screen{ display:none !important; }
+    #app-shell{ display:block !important; }
+    #app-shell > *:not(#print-area){ display:none !important; }
+    #print-area{ display:block !important; position:static; width:auto; padding:0; margin:0; }
+  }
+
+  @media (max-width:900px){
+    .cad-grid{grid-template-columns:1fr;}
+  }
+  @media (max-width:720px){
+    .grid2{grid-template-columns:1fr;}
+    .summary-strip{grid-template-columns:1fr 1fr;}
+    header.masthead .row{flex-direction:column; align-items:flex-start;}
+    header.masthead .today{text-align:left;}
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="mark">Acompanhamento de compras</div>
+    <h1>Entrar no sistema</h1>
+    <form id="login-form">
+      <div class="field">
+        <label for="login-user">Usuário</label>
+        <input type="text" id="login-user" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="login-pass">Senha</label>
+        <input type="password" id="login-pass" autocomplete="current-password" required>
+      </div>
+      <button type="submit">Entrar</button>
+      <div class="login-error" id="login-error"></div>
+    </form>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-shell" class="hidden">
+
+<header class="masthead">
+  <div class="row">
+    <div>
+      <h1>Acompanhamento Pedidos de Compra</h1>
+      <p>Registro de pedidos e apuração de previsto × realizado por trimestre</p>
+    </div>
+    <div class="today">
+      <div id="today-label"></div>
+      <button id="btn-logout">Sair</button>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="pedidos">Pedidos</button>
+  <button class="tab-btn" data-tab="rnc">RNC</button>
+  <button class="tab-btn" data-tab="relatorio">Relatório trimestral</button>
+  <button class="tab-btn" data-tab="cadastros">Cadastros</button>
+  <button class="tab-btn" data-tab="configuracoes">Configurações</button>
+</nav>
+
+<main>
+
+  <!-- PEDIDOS -->
+  <section class="view active" id="view-pedidos">
+
+    <div class="summary-strip" id="summary-strip"></div>
+
+    <div class="toolbar">
+      <div class="filters">
+        <input type="text" id="f-texto" placeholder="Buscar pedido, fornecedor, projeto...">
+        <select id="f-status">
+          <option value="">Todos os status</option>
+        </select>
+        <select id="f-projeto">
+          <option value="">Todos os projetos</option>
+        </select>
+        <select id="f-centro">
+          <option value="">Todos os centros de custo</option>
+        </select>
+      </div>
+      <div class="toolbar-actions">
+        <button class="primary" id="btn-novo">+ Novo pedido</button>
+        <button class="ghost" id="btn-imprimir-pedidos">🖨️ Imprimir lista</button>
+      </div>
+    </div>
+
+    <div id="legend-status" class="legend-status"></div>
+
+    <div style="overflow-x:auto;">
+    <table id="tbl-pedidos">
+      <thead>
+        <tr>
+          <th data-sort="dataPedido">Data do pedido<span class="arrow"></span></th>
+          <th data-sort="numeroPedido">Nº pedido<span class="arrow"></span></th>
+          <th data-sort="projeto">Projeto<span class="arrow"></span></th>
+          <th data-sort="fornecedor">Fornecedor<span class="arrow"></span></th>
+          <th>Descrição</th>
+          <th class="num-col" data-sort="valorPrevisto">Previsto DRE<span class="arrow"></span></th>
+          <th class="num-col" data-sort="valorReal">Real de compra<span class="arrow"></span></th>
+          <th class="num-col">Prev. × Real. (%)</th>
+          <th data-sort="dataEntrega">Entrega<span class="arrow"></span></th>
+          <th>Pagamento</th>
+          <th>Frete</th>
+          <th>Centro de custo</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbl-body"></tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- RNC -->
+  <section class="view" id="view-rnc">
+
+    <div class="summary-strip" id="summary-strip-rnc"></div>
+
+    <div class="toolbar">
+      <div class="filters">
+        <input type="text" id="rnc-f-texto" placeholder="Buscar RNC, pedido, fornecedor...">
+        <select id="rnc-f-status">
+          <option value="">Todos os status</option>
+        </select>
+        <select id="rnc-f-projeto">
+          <option value="">Todos os projetos</option>
+        </select>
+      </div>
+      <div class="toolbar-actions">
+        <button class="primary" id="btn-nova-rnc">+ Nova RNC</button>
+        <button class="ghost" id="btn-imprimir-rnc">🖨️ Imprimir lista</button>
+      </div>
+    </div>
+
+    <p class="hint" id="rnc-sem-pedidos" style="padding:0; margin:0 0 14px; display:none;">
+      Cadastre ao menos um pedido na aba "Pedidos" antes de lançar uma RNC — toda RNC precisa estar vinculada a um pedido existente.
+    </p>
+
+    <div style="overflow-x:auto;">
+    <table id="tbl-rnc">
+      <thead>
+        <tr>
+          <th data-sort-rnc="dataAbertura">Abertura<span class="arrow"></span></th>
+          <th data-sort-rnc="pedidoLabel">Pedido vinculado<span class="arrow"></span></th>
+          <th>Projeto</th>
+          <th>Fornecedor</th>
+          <th>Tipo</th>
+          <th>Descrição</th>
+          <th>Responsável</th>
+          <th>Status</th>
+          <th>Conclusão</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbl-rnc-body"></tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- RELATORIO -->
+  <section class="view" id="view-relatorio">
+    <div class="report-head">
+      <h2 id="report-title">Previsto × Realizado</h2>
+      <div class="report-filters">
+        <select id="r-periodo">
+          <option value="mensal">Mensal</option>
+          <option value="trimestral" selected>Trimestral</option>
+          <option value="semestral">Semestral</option>
+          <option value="anual">Anual (todos os anos)</option>
+        </select>
+        <select id="r-ano"></select>
+        <select id="r-projeto">
+          <option value="">Todos os projetos</option>
+        </select>
+        <button type="button" class="ghost" id="btn-abrir-imprimir">🖨️ Imprimir</button>
+      </div>
+    </div>
+
+    <div id="report-content"></div>
+  </section>
+
+  <!-- CADASTROS -->
+  <section class="view" id="view-cadastros">
+    <div class="cad-grid">
+      <div class="cad-card">
+        <h3>Formas de pagamento</h3>
+        <form class="cad-add" data-list="pagamentos">
+          <input type="text" placeholder="Nova forma de pagamento" required>
+          <button type="submit" class="primary">Adicionar</button>
+        </form>
+        <ul class="cad-list" id="lista-pagamentos"></ul>
+      </div>
+      <div class="cad-card">
+        <h3>Tipos de frete</h3>
+        <form class="cad-add" data-list="fretes">
+          <input type="text" placeholder="Novo tipo de frete" required>
+          <button type="submit" class="primary">Adicionar</button>
+        </form>
+        <ul class="cad-list" id="lista-fretes"></ul>
+      </div>
+      <div class="cad-card">
+        <h3>Status de pedido</h3>
+        <form class="cad-add" data-list="status">
+          <input type="text" placeholder="Novo status" required>
+          <button type="submit" class="primary">Adicionar</button>
+        </form>
+        <p class="hint">Marque "Finalizado" para status que encerram o pedido (ex.: Entregue, Cancelado) — eles nunca ficam vermelhos por atraso.</p>
+        <ul class="cad-list" id="lista-status"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONFIGURAÇÕES -->
+  <section class="view" id="view-configuracoes">
+    <div class="cad-grid config-grid">
+      <div class="cad-card">
+        <h3>Backup dos dados (.json)</h3>
+        <div class="config-body">
+          <p class="hint" style="padding:0; margin:0 0 14px;">
+            Gera um arquivo .json com todos os pedidos e cadastros (formas de pagamento, tipos de frete e status).
+            Escolha uma pasta fixa para os backups: a partir daí, salvar e carregar o último backup passam a
+            usar essa pasta automaticamente, sem abrir a janela de seleção toda vez.
+          </p>
+          <div class="config-actions">
+            <button type="button" class="ghost" id="btn-escolher-pasta">📁 Escolher pasta de backup</button>
+          </div>
+          <p class="config-note" id="pasta-backup-info">Nenhuma pasta selecionada — os backups serão salvos onde você indicar a cada vez.</p>
+          <div class="config-actions" style="margin-top:14px;">
+            <button type="button" class="primary" id="btn-salvar-backup">💾 Salvar backup</button>
+            <button type="button" class="ghost" id="btn-carregar-backup">📂 Carregar último backup</button>
+          </div>
+          <p class="config-note" id="ultimo-backup-info">Nenhum backup salvo neste navegador ainda.</p>
+          <p class="config-note">
+            No Chrome e no Edge, é possível fixar uma pasta do computador para os backups. Em outros navegadores
+            (Firefox, Safari), essa opção não é suportada: "Salvar backup" baixa o arquivo para a pasta de downloads
+            padrão e "Carregar último backup" pede para você selecionar o arquivo manualmente.
+          </p>
+        </div>
+      </div>
+
+      <div class="cad-card">
+        <h3>Aparência do sistema</h3>
+        <div class="config-body">
+          <p class="hint" style="padding:0; margin:0 0 14px;">
+            Escolha a cor de destaque e a combinação de fontes usadas em todo o sistema. A mudança é aplicada
+            imediatamente e fica salva neste navegador.
+          </p>
+          <label class="config-label">Cor do sistema</label>
+          <div class="swatch-row" id="swatch-row"></div>
+
+          <label class="config-label" style="margin-top:18px;">Fonte do sistema</label>
+          <select id="sel-fonte">
+            <option value="classico">Clássico (serifado)</option>
+            <option value="moderno">Moderno</option>
+            <option value="sobrio">Sóbrio (estilo impresso)</option>
+            <option value="sistema">Fonte padrão do computador</option>
+          </select>
+
+          <div class="config-actions" style="margin-top:16px;">
+            <button type="button" class="ghost" id="btn-restaurar-tema">Restaurar padrão</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <input type="file" id="backup-file-input" accept="application/json" class="hidden">
+  </section>
+
+</main>
+
+<footer>Os dados ficam salvos apenas neste navegador (armazenamento local do computador).</footer>
+
+<!-- MODAL PEDIDO -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-title">Novo pedido</h2>
+      <button id="modal-close" aria-label="Fechar">&times;</button>
+    </div>
+    <form id="pedido-form">
+      <input type="hidden" id="p-id">
+      <div class="grid2">
+        <div class="field">
+          <label for="p-dataPedido">Data do pedido *</label>
+          <input type="date" id="p-dataPedido" required>
+        </div>
+        <div class="field">
+          <label for="p-numeroPedido">Número do pedido *</label>
+          <input type="text" id="p-numeroPedido" required placeholder="Ex: PC-2026-014">
+        </div>
+        <div class="field">
+          <label for="p-projeto">Projeto *</label>
+          <input type="text" id="p-projeto" required placeholder="Ex: Expansão Linha 2">
+        </div>
+        <div class="field">
+          <label for="p-fornecedor">Fornecedor *</label>
+          <input type="text" id="p-fornecedor" required>
+        </div>
+        <div class="field full">
+          <label for="p-descricaoItem">Descrição do item</label>
+          <textarea id="p-descricaoItem" placeholder="O que está sendo comprado"></textarea>
+        </div>
+        <div class="field">
+          <label for="p-valorPrevisto">Valor previsto em DRE (R$) *</label>
+          <input type="number" step="0.01" min="0" id="p-valorPrevisto" required>
+        </div>
+        <div class="field">
+          <label for="p-valorReal">Valor real de compra (R$)</label>
+          <input type="number" step="0.01" min="0" id="p-valorReal" placeholder="Preencher quando fechado">
+        </div>
+        <div class="field">
+          <label for="p-dataEntrega">Data de entrega prevista</label>
+          <input type="date" id="p-dataEntrega">
+        </div>
+        <div class="field">
+          <label for="p-centroCusto">Centro de custo</label>
+          <input type="text" id="p-centroCusto">
+        </div>
+        <div class="field">
+          <label for="p-formaPagamento">Forma de pagamento</label>
+          <select id="p-formaPagamento"></select>
+        </div>
+        <div class="field">
+          <label for="p-tipoFrete">Tipo de frete</label>
+          <select id="p-tipoFrete"></select>
+        </div>
+        <div class="field">
+          <label for="p-status">Status</label>
+          <select id="p-status"></select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="ghost" id="btn-cancelar">Cancelar</button>
+        <button type="submit" class="primary">Salvar pedido</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL RNC -->
+<div class="overlay" id="overlay-rnc">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-rnc-title">Nova RNC</h2>
+      <button id="modal-rnc-close" aria-label="Fechar">&times;</button>
+    </div>
+    <form id="rnc-form">
+      <input type="hidden" id="rnc-id">
+      <div class="grid2">
+        <div class="field full">
+          <label for="rnc-pedidoId">Pedido vinculado *</label>
+          <select id="rnc-pedidoId" required></select>
+        </div>
+        <div class="field">
+          <label for="rnc-dataAbertura">Data de abertura *</label>
+          <input type="date" id="rnc-dataAbertura" required>
+        </div>
+        <div class="field">
+          <label for="rnc-tipo">Tipo de não conformidade</label>
+          <select id="rnc-tipo">
+            <option>Atraso na entrega</option>
+            <option>Divergência de valor</option>
+            <option>Item avariado/danificado</option>
+            <option>Especificação incorreta</option>
+            <option>Documentação incompleta</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="rnc-descricao">Descrição da não conformidade *</label>
+          <textarea id="rnc-descricao" required placeholder="O que foi identificado"></textarea>
+        </div>
+        <div class="field">
+          <label for="rnc-responsavel">Responsável pela identificação</label>
+          <input type="text" id="rnc-responsavel">
+        </div>
+        <div class="field">
+          <label for="rnc-status">Status</label>
+          <select id="rnc-status">
+            <option>Aberta</option>
+            <option>Em tratativa</option>
+            <option>Concluída</option>
+            <option>Cancelada</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="rnc-acao">Ação corretiva / tratativa</label>
+          <textarea id="rnc-acao" placeholder="O que foi feito para resolver"></textarea>
+        </div>
+        <div class="field">
+          <label for="rnc-dataConclusao">Data de conclusão</label>
+          <input type="date" id="rnc-dataConclusao">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="ghost" id="btn-cancelar-rnc">Cancelar</button>
+        <button type="submit" class="primary">Salvar RNC</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL IMPRIMIR -->
+<div class="overlay" id="overlay-imprimir">
+  <div class="modal narrow">
+    <div class="modal-head">
+      <h2>Imprimir relatório</h2>
+      <button id="modal-imprimir-close" aria-label="Fechar">&times;</button>
+    </div>
+    <form id="form-imprimir">
+      <div class="field">
+        <label>Quais relatórios você quer imprimir?</label>
+        <div class="checklist">
+          <label><input type="checkbox" name="periodo" value="mensal"> Mensal</label>
+          <label><input type="checkbox" name="periodo" value="trimestral" checked> Trimestral</label>
+          <label><input type="checkbox" name="periodo" value="semestral"> Semestral</label>
+          <label><input type="checkbox" name="periodo" value="anual"> Anual (todos os anos)</label>
+        </div>
+      </div>
+      <p class="config-note" style="margin:0 0 4px;">
+        Cada relatório marcado sai em uma página, usando o ano e o projeto já selecionados no filtro
+        (o ano é ignorado no relatório Anual).
+      </p>
+      <div class="modal-footer">
+        <button type="button" class="ghost" id="btn-cancelar-imprimir">Cancelar</button>
+        <button type="submit" class="primary">Gerar e imprimir</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ÁREA EXCLUSIVA PARA IMPRESSÃO -->
+<div id="print-area"></div>
+
+</div><!-- /app-shell -->
+
+<script>
+(function(){
+  "use strict";
+
+  // ================= TEMA (cor e fonte do sistema) =================
+  var TEMA_KEY = "pdc_tema_v1";
+  var COLOR_PRESETS = {
+    teal:    { label:"Verde-azulado (padrão)", accent:"#35606b", accentDark:"#24444d" },
+    azul:    { label:"Azul",     accent:"#2f5f8a", accentDark:"#1f4363" },
+    verde:   { label:"Verde",    accent:"#3c7a4e", accentDark:"#2a5636" },
+    vinho:   { label:"Vinho",    accent:"#7a3040", accentDark:"#54212d" },
+    grafite: { label:"Grafite",  accent:"#4a4f57", accentDark:"#33363c" },
+    terracota:{ label:"Terracota", accent:"#a0532d", accentDark:"#733a1f" }
+  };
+  var FONT_PRESETS = {
+    classico: { label:"Clássico (serifado)", serif:"'Spectral', serif", sans:"'IBM Plex Sans', system-ui, sans-serif" },
+    moderno:  { label:"Moderno", serif:"'Poppins', sans-serif", sans:"'Inter', system-ui, sans-serif" },
+    sobrio:   { label:"Sóbrio (estilo impresso)", serif:"Georgia, 'Times New Roman', serif", sans:"Arial, Helvetica, sans-serif" },
+    sistema:  { label:"Fonte padrão do computador", serif:"system-ui, sans-serif", sans:"system-ui, sans-serif" }
+  };
+  function lerTemaSalvo(){
+    try{
+      var t = JSON.parse(localStorage.getItem(TEMA_KEY) || "null");
+      return {
+        color: (t && COLOR_PRESETS[t.color]) ? t.color : "teal",
+        font: (t && FONT_PRESETS[t.font]) ? t.font : "classico"
+      };
+    }catch(e){
+      return { color:"teal", font:"classico" };
+    }
+  }
+  function aplicarTemaNoDocumento(tema){
+    var c = COLOR_PRESETS[tema.color] || COLOR_PRESETS.teal;
+    var f = FONT_PRESETS[tema.font] || FONT_PRESETS.classico;
+    var root = document.documentElement.style;
+    root.setProperty("--accent", c.accent);
+    root.setProperty("--accent-dark", c.accentDark);
+    root.setProperty("--font-serif", f.serif);
+    root.setProperty("--font-sans", f.sans);
+  }
+  // Aplica o tema salvo imediatamente, antes do login, para que a própria tela de login já reflita a escolha.
+  aplicarTemaNoDocumento(lerTemaSalvo());
+
+  // ================= LOGIN =================
+  var VALID_USER = "adm";
+  var VALID_PASS = "1234";
+  var SESSION_KEY = "pdc_session_v1";
+
+  var loginScreen = document.getElementById("login-screen");
+  var appShell = document.getElementById("app-shell");
+
+  function showApp(){
+    loginScreen.classList.add("hidden");
+    appShell.classList.remove("hidden");
+    initApp();
+  }
+  function showLogin(msg){
+    appShell.classList.add("hidden");
+    loginScreen.classList.remove("hidden");
+    document.getElementById("login-error").textContent = msg || "";
+    document.getElementById("login-user").value = "";
+    document.getElementById("login-pass").value = "";
+    document.getElementById("login-user").focus();
+  }
+
+  document.getElementById("login-form").addEventListener("submit", function(e){
+    e.preventDefault();
+    var u = document.getElementById("login-user").value.trim();
+    var p = document.getElementById("login-pass").value;
+    if(u===VALID_USER && p===VALID_PASS){
+      try{ sessionStorage.setItem(SESSION_KEY, "1"); }catch(err){}
+      showApp();
+    } else {
+      document.getElementById("login-error").textContent = "Usuário ou senha inválidos.";
+    }
+  });
+
+  var appInitialized = false;
+
+  (function bootstrap(){
+    var logged = false;
+    try{ logged = sessionStorage.getItem(SESSION_KEY)==="1"; }catch(e){}
+    if(logged){ showApp(); } else { showLogin(); }
+  })();
+
+  // ================= APP =================
+  function initApp(){
+    if(appInitialized) return;
+    appInitialized = true;
+
+    document.getElementById("btn-logout").addEventListener("click", function(){
+      try{ sessionStorage.removeItem(SESSION_KEY); }catch(e){}
+      showLogin();
+    });
+
+    var STORAGE_KEY = "pedidos_compra_v1";
+    var KEY_PAGAMENTOS = "formas_pagamento_v1";
+    var KEY_FRETES = "tipos_frete_v1";
+    var KEY_STATUS_V2 = "status_pedido_v2";
+    var KEY_STATUS_V1 = "status_pedido_v1";
+
+    var DEFAULT_PAGAMENTOS = ["À vista","Boleto","Cartão de crédito","Transferência (PIX/TED)","Parcelado"];
+    var DEFAULT_FRETES = ["CIF (por conta do fornecedor)","FOB (por conta do comprador)","Retirada própria","Transportadora contratada"];
+    var DEFAULT_STATUS = [
+      {nome:"Aberto", final:false},
+      {nome:"Aprovado", final:false},
+      {nome:"Em cotação", final:false},
+      {nome:"Enviado ao fornecedor", final:false},
+      {nome:"Entregue", final:true},
+      {nome:"Cancelado", final:true}
+    ];
+
+    var PALETTE = [
+      {bg:"#e6e2d6", fg:"#5c5644"},
+      {bg:"#dde6ef", fg:"#2c4f6d"},
+      {bg:"#f6ecd6", fg:"#96690a"},
+      {bg:"#dcefe0", fg:"#1f6b3c"},
+      {bg:"#ece1f5", fg:"#5b3c94"},
+      {bg:"#e0f0ee", fg:"#1f6b63"},
+      {bg:"#f0e6da", fg:"#7a5230"}
+    ];
+
+    var pedidos = [];
+    try{ pedidos = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }catch(e){ pedidos = []; }
+
+    var RNC_KEY = "rnc_pedidos_v1";
+    var STATUS_RNC = ["Aberta","Em tratativa","Concluída","Cancelada"];
+    var rncs = [];
+    try{ rncs = JSON.parse(localStorage.getItem(RNC_KEY) || "[]"); }catch(e){ rncs = []; }
+    function persistRnc(){
+      try{ localStorage.setItem(RNC_KEY, JSON.stringify(rncs)); }catch(e){}
+    }
+
+    var listas = {
+      pagamentos: loadSimpleList(KEY_PAGAMENTOS, DEFAULT_PAGAMENTOS),
+      fretes: loadSimpleList(KEY_FRETES, DEFAULT_FRETES),
+      status: loadStatusList()
+    };
+
+    var sortState = { field: "dataPedido", dir: "desc" };
+    var filterState = { texto: "", status: "", projeto: "", centro: "" };
+    var editingId = null;
+
+    function loadSimpleList(key, defaults){
+      try{
+        var v = JSON.parse(localStorage.getItem(key));
+        if(Array.isArray(v) && v.length) return v;
+      }catch(e){}
+      return defaults.slice();
+    }
+
+    function loadStatusList(){
+      try{
+        var raw = JSON.parse(localStorage.getItem(KEY_STATUS_V2));
+        if(Array.isArray(raw) && raw.length && typeof raw[0]==="object" && raw[0]!==null){
+          return raw;
+        }
+      }catch(e){}
+      try{
+        var oldRaw = JSON.parse(localStorage.getItem(KEY_STATUS_V1));
+        if(Array.isArray(oldRaw) && oldRaw.length){
+          return oldRaw.map(function(nome){
+            return {nome:nome, final:(nome==="Entregue"||nome==="Cancelado")};
+          });
+        }
+      }catch(e){}
+      return DEFAULT_STATUS.slice();
+    }
+
+    function saveList(kind){
+      try{
+        if(kind==="pagamentos") localStorage.setItem(KEY_PAGAMENTOS, JSON.stringify(listas.pagamentos));
+        if(kind==="fretes") localStorage.setItem(KEY_FRETES, JSON.stringify(listas.fretes));
+        if(kind==="status") localStorage.setItem(KEY_STATUS_V2, JSON.stringify(listas.status));
+      }catch(e){}
+    }
+    function persist(){
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(pedidos)); }catch(e){}
+    }
+
+    function uid(){
+      return "p_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,7);
+    }
+    function brl(v){
+      var n = Number(v)||0;
+      return n.toLocaleString("pt-BR", {style:"currency", currency:"BRL"});
+    }
+    function fmtDate(iso){
+      if(!iso) return "—";
+      var parts = iso.split("-");
+      if(parts.length!==3) return iso;
+      return parts[2] + "/" + parts[1] + "/" + parts[0];
+    }
+    function esc(str){
+      return String(str==null?"":str)
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+    function pctEfetivo(previsto, real){
+      previsto = Number(previsto)||0;
+      real = Number(real);
+      if(!previsto || isNaN(real)) return null;
+      return (real/previsto)*100;
+    }
+    function pctClass(pct){
+      if(pct===null) return "";
+      if(pct<=100) return "good";
+      if(pct<=115) return "warn";
+      return "bad";
+    }
+    function getQuarter(iso){
+      var d = new Date(iso+"T00:00:00");
+      return Math.floor(d.getMonth()/3)+1;
+    }
+    function getYear(iso){ return Number(iso.split("-")[0]); }
+
+    function findStatus(nome){
+      for(var i=0;i<listas.status.length;i++){
+        if(listas.status[i].nome===nome) return listas.status[i];
+      }
+      return null;
+    }
+    function statusIndex(nome){
+      for(var i=0;i<listas.status.length;i++){
+        if(listas.status[i].nome===nome) return i;
+      }
+      return -1;
+    }
+    function statusColor(nome){
+      var idx = statusIndex(nome);
+      if(idx<0) idx = 0;
+      return PALETTE[idx % PALETTE.length];
+    }
+    function isFinalStatus(nome){
+      var st = findStatus(nome);
+      return !!(st && st.final);
+    }
+    function isOverdue(p){
+      if(!p.dataEntrega) return false;
+      if(isFinalStatus(p.status)) return false;
+      var hoje = new Date();
+      hoje.setHours(0,0,0,0);
+      var entrega = new Date(p.dataEntrega+"T00:00:00");
+      return hoje.getTime() > entrega.getTime();
+    }
+    function rowStyle(p){
+      if(isOverdue(p)) return "background:"+"var(--overdue-bg)"+";";
+      var c = statusColor(p.status);
+      return "background:"+c.bg+";";
+    }
+
+    // ---------- select population ----------
+    function fillSelect(sel, options, keepValue){
+      var current = keepValue!==undefined ? keepValue : sel.value;
+      sel.innerHTML = options.map(function(o){return '<option value="'+esc(o)+'">'+esc(o)+'</option>';}).join("");
+      if(options.indexOf(current)>-1) sel.value = current;
+    }
+
+    function statusNames(){ return listas.status.map(function(s){return s.nome;}); }
+
+    function refreshFormSelects(){
+      fillSelect(document.getElementById("p-formaPagamento"), listas.pagamentos);
+      fillSelect(document.getElementById("p-tipoFrete"), listas.fretes);
+      fillSelect(document.getElementById("p-status"), statusNames());
+    }
+
+    function refreshFilterOptions(){
+      var selStatus = document.getElementById("f-status");
+      var cur = selStatus.value;
+      selStatus.innerHTML = '<option value="">Todos os status</option>' +
+        statusNames().map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+'</option>';}).join("");
+      if(statusNames().indexOf(cur)>-1) selStatus.value = cur;
+
+      var projetos = Array.from(new Set(pedidos.map(function(p){return p.projeto;}))).filter(Boolean).sort();
+      var selProjeto = document.getElementById("f-projeto");
+      var curP = selProjeto.value;
+      selProjeto.innerHTML = '<option value="">Todos os projetos</option>' +
+        projetos.map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+'</option>';}).join("");
+      selProjeto.value = curP;
+
+      var centros = Array.from(new Set(pedidos.map(function(p){return p.centroCusto;}))).filter(Boolean).sort();
+      var selCentro = document.getElementById("f-centro");
+      var curC = selCentro.value;
+      selCentro.innerHTML = '<option value="">Todos os centros de custo</option>' +
+        centros.map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+'</option>';}).join("");
+      selCentro.value = curC;
+    }
+
+    function renderLegend(){
+      var el = document.getElementById("legend-status");
+      var html = listas.status.map(function(s){
+        var c = PALETTE[statusIndex(s.nome) % PALETTE.length];
+        return '<span><span class="sw" style="background:'+c.bg+'"></span>'+esc(s.nome)+'</span>';
+      }).join("");
+      html += '<span><span class="sw overdue"></span>Em atraso</span>';
+      el.innerHTML = html;
+    }
+
+    // ---------- filtering + sorting ----------
+    function getFiltered(){
+      var texto = filterState.texto.trim().toLowerCase();
+      var list = pedidos.filter(function(p){
+        if(filterState.status && p.status!==filterState.status) return false;
+        if(filterState.projeto && p.projeto!==filterState.projeto) return false;
+        if(filterState.centro && p.centroCusto!==filterState.centro) return false;
+        if(texto){
+          var hay = [p.numeroPedido,p.projeto,p.fornecedor,p.descricaoItem,p.centroCusto].join(" ").toLowerCase();
+          if(hay.indexOf(texto)===-1) return false;
+        }
+        return true;
+      });
+      var field = sortState.field, dir = sortState.dir;
+      list.sort(function(a,b){
+        var va = a[field], vb = b[field];
+        if(field==="valorPrevisto" || field==="valorReal"){
+          va = Number(va)||0; vb = Number(vb)||0;
+        } else {
+          va = (va||"").toString().toLowerCase();
+          vb = (vb||"").toString().toLowerCase();
+        }
+        if(va<vb) return dir==="asc"?-1:1;
+        if(va>vb) return dir==="asc"?1:-1;
+        return 0;
+      });
+      return list;
+    }
+
+    // ---------- render: table ----------
+    function renderTable(){
+      var list = getFiltered();
+      var body = document.getElementById("tbl-body");
+
+      if(list.length===0){
+        body.innerHTML = '<tr class="empty-row"><td colspan="14">' +
+          (pedidos.length===0 ? "Nenhum pedido cadastrado ainda. Clique em \u201c+ Novo pedido\u201d para começar." : "Nenhum pedido corresponde aos filtros aplicados.") +
+          "</td></tr>";
+      } else {
+        body.innerHTML = list.map(function(p){
+          var pct = pctEfetivo(p.valorPrevisto, p.valorReal);
+          var pctLabel = pct===null ? "—" : pct.toFixed(1).replace(".",",") + "%";
+          var atrasado = isOverdue(p);
+          return "<tr style='"+rowStyle(p)+"'>" +
+            "<td>"+fmtDate(p.dataPedido)+"</td>" +
+            "<td>"+esc(p.numeroPedido)+"</td>" +
+            "<td>"+esc(p.projeto)+"</td>" +
+            "<td>"+esc(p.fornecedor)+"</td>" +
+            "<td class='desc'>"+esc(p.descricaoItem||"—")+"</td>" +
+            "<td class='num-col num'>"+brl(p.valorPrevisto)+"</td>" +
+            "<td class='num-col num'>"+(p.valorReal!==""&&p.valorReal!=null?brl(p.valorReal):"—")+"</td>" +
+            "<td class='num-col num'><span class='pct-badge "+pctClass(pct)+"'>"+pctLabel+"</span></td>" +
+            "<td>"+fmtDate(p.dataEntrega)+"</td>" +
+            "<td>"+esc(p.formaPagamento||"—")+"</td>" +
+            "<td>"+esc(p.tipoFrete||"—")+"</td>" +
+            "<td>"+esc(p.centroCusto||"—")+"</td>" +
+            "<td><span class='pill"+(atrasado?" overdue-pill":"")+"'>"+esc(p.status)+(atrasado?" · Atrasado":"")+"</span></td>" +
+            "<td class='actions-col'>" +
+              "<button class='icon-btn' data-edit='"+p.id+"' title='Editar'>✏️</button>" +
+              "<button class='icon-btn' data-del='"+p.id+"' title='Excluir'>🗑️</button>" +
+            "</td>" +
+          "</tr>";
+        }).join("");
+      }
+
+      document.querySelectorAll("thead th[data-sort]").forEach(function(th){
+        var arrow = th.querySelector(".arrow");
+        if(th.getAttribute("data-sort")===sortState.field){
+          arrow.textContent = sortState.dir==="asc" ? "▲" : "▼";
+        } else {
+          arrow.textContent = "";
+        }
+      });
+    }
+
+    function renderSummary(){
+      var list = getFiltered();
+      var totalPrevisto = list.reduce(function(s,p){return s+(Number(p.valorPrevisto)||0);},0);
+      var totalReal = list.reduce(function(s,p){return s + (p.valorReal!==""&&p.valorReal!=null ? Number(p.valorReal) : 0);},0);
+      var pctGeral = totalPrevisto>0 ? (totalReal/totalPrevisto*100) : null;
+      var atrasados = list.filter(isOverdue).length;
+
+      var html = "";
+      html += cellHtml("Pedidos listados", list.length);
+      html += cellHtml("Total previsto em DRE", brl(totalPrevisto));
+      html += cellHtml("Total realizado", brl(totalReal));
+      html += cellHtml("Em atraso", atrasados);
+      document.getElementById("summary-strip").innerHTML = html;
+    }
+    function cellHtml(label,value){
+      return '<div class="cell"><div class="label">'+esc(label)+'</div><div class="value num">'+esc(value)+'</div></div>';
+    }
+
+    // ---------- modal / form ----------
+    var overlay = document.getElementById("overlay");
+    var form = document.getElementById("pedido-form");
+
+    function openForm(id){
+      editingId = id || null;
+      refreshFormSelects();
+      document.getElementById("modal-title").textContent = id ? "Editar pedido" : "Novo pedido";
+      if(id){
+        var p = pedidos.find(function(x){return x.id===id;});
+        document.getElementById("p-id").value = p.id;
+        document.getElementById("p-dataPedido").value = p.dataPedido||"";
+        document.getElementById("p-numeroPedido").value = p.numeroPedido||"";
+        document.getElementById("p-projeto").value = p.projeto||"";
+        document.getElementById("p-fornecedor").value = p.fornecedor||"";
+        document.getElementById("p-descricaoItem").value = p.descricaoItem||"";
+        document.getElementById("p-valorPrevisto").value = p.valorPrevisto!=null ? p.valorPrevisto : "";
+        document.getElementById("p-valorReal").value = p.valorReal!=null ? p.valorReal : "";
+        document.getElementById("p-dataEntrega").value = p.dataEntrega||"";
+        document.getElementById("p-centroCusto").value = p.centroCusto||"";
+        if(p.formaPagamento) document.getElementById("p-formaPagamento").value = p.formaPagamento;
+        if(p.tipoFrete) document.getElementById("p-tipoFrete").value = p.tipoFrete;
+        if(p.status) document.getElementById("p-status").value = p.status;
+      } else {
+        form.reset();
+        document.getElementById("p-id").value = "";
+        document.getElementById("p-dataPedido").value = new Date().toISOString().slice(0,10);
+        refreshFormSelects();
+      }
+      overlay.classList.add("open");
+    }
+    function closeForm(){
+      overlay.classList.remove("open");
+      editingId = null;
+    }
+
+    document.getElementById("btn-novo").addEventListener("click", function(){ openForm(null); });
+    document.getElementById("modal-close").addEventListener("click", closeForm);
+    document.getElementById("btn-cancelar").addEventListener("click", closeForm);
+    overlay.addEventListener("click", function(e){ if(e.target===overlay) closeForm(); });
+
+    form.addEventListener("submit", function(e){
+      e.preventDefault();
+      var id = document.getElementById("p-id").value || uid();
+      var realRaw = document.getElementById("p-valorReal").value;
+      var data = {
+        id: id,
+        dataPedido: document.getElementById("p-dataPedido").value,
+        numeroPedido: document.getElementById("p-numeroPedido").value.trim(),
+        projeto: document.getElementById("p-projeto").value.trim(),
+        fornecedor: document.getElementById("p-fornecedor").value.trim(),
+        descricaoItem: document.getElementById("p-descricaoItem").value.trim(),
+        valorPrevisto: parseFloat(document.getElementById("p-valorPrevisto").value)||0,
+        valorReal: realRaw==="" ? "" : parseFloat(realRaw),
+        dataEntrega: document.getElementById("p-dataEntrega").value,
+        centroCusto: document.getElementById("p-centroCusto").value.trim(),
+        formaPagamento: document.getElementById("p-formaPagamento").value,
+        tipoFrete: document.getElementById("p-tipoFrete").value,
+        status: document.getElementById("p-status").value
+      };
+      var idx = pedidos.findIndex(function(x){return x.id===id;});
+      if(idx>-1){ pedidos[idx] = data; } else { pedidos.push(data); }
+      persist();
+      closeForm();
+      refreshFilterOptions();
+      renderTable();
+      renderSummary();
+      renderReport();
+    });
+
+    document.getElementById("tbl-body").addEventListener("click", function(e){
+      var editId = e.target.getAttribute("data-edit");
+      var delId = e.target.getAttribute("data-del");
+      if(editId){ openForm(editId); }
+      if(delId){
+        var p = pedidos.find(function(x){return x.id===delId;});
+        if(p && confirm("Excluir o pedido "+p.numeroPedido+"?")){
+          pedidos = pedidos.filter(function(x){return x.id!==delId;});
+          persist();
+          refreshFilterOptions();
+          renderTable();
+          renderSummary();
+          renderReport();
+        }
+      }
+    });
+
+    document.querySelectorAll("thead th[data-sort]").forEach(function(th){
+      th.addEventListener("click", function(){
+        var field = th.getAttribute("data-sort");
+        if(sortState.field===field){
+          sortState.dir = sortState.dir==="asc" ? "desc" : "asc";
+        } else {
+          sortState.field = field;
+          sortState.dir = "asc";
+        }
+        renderTable();
+      });
+    });
+
+    document.getElementById("f-texto").addEventListener("input", function(e){
+      filterState.texto = e.target.value; renderTable(); renderSummary();
+    });
+    document.getElementById("f-status").addEventListener("change", function(e){
+      filterState.status = e.target.value; renderTable(); renderSummary();
+    });
+    document.getElementById("f-projeto").addEventListener("change", function(e){
+      filterState.projeto = e.target.value; renderTable(); renderSummary();
+    });
+    document.getElementById("f-centro").addEventListener("change", function(e){
+      filterState.centro = e.target.value; renderTable(); renderSummary();
+    });
+
+    // ---------- RNC (não conformidades vinculadas a pedidos) ----------
+    var rncSortState = { field:"dataAbertura", dir:"desc" };
+    var rncFilterState = { texto:"", status:"", projeto:"" };
+    var editingRncId = null;
+
+    function findPedido(id){
+      return pedidos.find(function(p){ return p.id===id; }) || null;
+    }
+    function pedidoLabel(p){
+      return p.numeroPedido + " — " + p.fornecedor + " (" + p.projeto + ")";
+    }
+    function rncStatusStyle(status){
+      var idx = STATUS_RNC.indexOf(status);
+      if(idx<0) idx = 0;
+      var c = PALETTE[idx % PALETTE.length];
+      return "background:"+c.bg+";color:"+c.fg+";";
+    }
+
+    function refreshRncPedidoSelect(){
+      var sel = document.getElementById("rnc-pedidoId");
+      var cur = sel.value;
+      if(pedidos.length===0){
+        sel.innerHTML = '<option value="">Nenhum pedido cadastrado</option>';
+        return;
+      }
+      var ordenados = pedidos.slice().sort(function(a,b){
+        return (b.dataPedido||"").localeCompare(a.dataPedido||"");
+      });
+      sel.innerHTML = ordenados.map(function(p){
+        return '<option value="'+esc(p.id)+'">'+esc(pedidoLabel(p))+'</option>';
+      }).join("");
+      if(pedidos.some(function(p){return p.id===cur;})) sel.value = cur;
+    }
+
+    function refreshRncFilterOptions(){
+      var selStatus = document.getElementById("rnc-f-status");
+      var curS = selStatus.value;
+      selStatus.innerHTML = '<option value="">Todos os status</option>' +
+        STATUS_RNC.map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+'</option>';}).join("");
+      if(STATUS_RNC.indexOf(curS)>-1) selStatus.value = curS;
+
+      var selProjeto = document.getElementById("rnc-f-projeto");
+      var curP = selProjeto.value;
+      var projetos = Array.from(new Set(pedidos.map(function(p){return p.projeto;}))).filter(Boolean).sort();
+      selProjeto.innerHTML = '<option value="">Todos os projetos</option>' +
+        projetos.map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+'</option>';}).join("");
+      if(projetos.indexOf(curP)>-1) selProjeto.value = curP;
+
+      var semPedidos = pedidos.length===0;
+      document.getElementById("rnc-sem-pedidos").style.display = semPedidos ? "block" : "none";
+      document.getElementById("btn-nova-rnc").disabled = semPedidos;
+    }
+
+    function getFilteredRnc(){
+      var texto = rncFilterState.texto.trim().toLowerCase();
+      var list = rncs.map(function(r){
+        var pedido = findPedido(r.pedidoId);
+        return {
+          rnc: r,
+          pedido: pedido,
+          pedidoLabel: pedido ? pedidoLabel(pedido) : "(pedido removido)",
+          projeto: pedido ? pedido.projeto : "",
+          fornecedor: pedido ? pedido.fornecedor : ""
+        };
+      });
+      list = list.filter(function(item){
+        if(rncFilterState.status && item.rnc.status!==rncFilterState.status) return false;
+        if(rncFilterState.projeto && item.projeto!==rncFilterState.projeto) return false;
+        if(texto){
+          var hay = [item.pedidoLabel, item.projeto, item.fornecedor, item.rnc.tipo, item.rnc.descricao, item.rnc.responsavel].join(" ").toLowerCase();
+          if(hay.indexOf(texto)===-1) return false;
+        }
+        return true;
+      });
+      var field = rncSortState.field, dir = rncSortState.dir;
+      list.sort(function(a,b){
+        var va, vb;
+        if(field==="pedidoLabel"){ va = a.pedidoLabel.toLowerCase(); vb = b.pedidoLabel.toLowerCase(); }
+        else { va = (a.rnc[field]||"").toString().toLowerCase(); vb = (b.rnc[field]||"").toString().toLowerCase(); }
+        if(va<vb) return dir==="asc"?-1:1;
+        if(va>vb) return dir==="asc"?1:-1;
+        return 0;
+      });
+      return list;
+    }
+
+    function renderTableRnc(){
+      var list = getFilteredRnc();
+      var body = document.getElementById("tbl-rnc-body");
+      if(list.length===0){
+        body.innerHTML = '<tr class="empty-row"><td colspan="10">' +
+          (rncs.length===0 ? "Nenhuma RNC lançada ainda." : "Nenhuma RNC corresponde aos filtros aplicados.") +
+          "</td></tr>";
+      } else {
+        body.innerHTML = list.map(function(item){
+          var r = item.rnc;
+          return "<tr style='"+rncStatusStyle(r.status)+"'>" +
+            "<td>"+fmtDate(r.dataAbertura)+"</td>" +
+            "<td>"+esc(item.pedidoLabel)+"</td>" +
+            "<td>"+esc(item.projeto||"—")+"</td>" +
+            "<td>"+esc(item.fornecedor||"—")+"</td>" +
+            "<td>"+esc(r.tipo||"—")+"</td>" +
+            "<td class='desc'>"+esc(r.descricao||"—")+"</td>" +
+            "<td>"+esc(r.responsavel||"—")+"</td>" +
+            "<td><span class='pill' style='"+rncStatusStyle(r.status)+"'>"+esc(r.status)+"</span></td>" +
+            "<td>"+fmtDate(r.dataConclusao)+"</td>" +
+            "<td class='actions-col'>" +
+              "<button class='link' data-edit-rnc='"+r.id+"'>Editar</button> &nbsp; " +
+              "<button class='link danger' data-del-rnc='"+r.id+"'>Excluir</button>" +
+            "</td>" +
+          "</tr>";
+        }).join("");
+      }
+      document.querySelectorAll("thead th[data-sort-rnc]").forEach(function(th){
+        var arrow = th.querySelector(".arrow");
+        if(th.getAttribute("data-sort-rnc")===rncSortState.field){
+          arrow.textContent = rncSortState.dir==="asc" ? "▲" : "▼";
+        } else { arrow.textContent = ""; }
+      });
+    }
+
+    function renderSummaryRnc(){
+      var list = getFilteredRnc();
+      var abertas = list.filter(function(item){ return item.rnc.status==="Aberta" || item.rnc.status==="Em tratativa"; }).length;
+      var concluidas = list.filter(function(item){ return item.rnc.status==="Concluída"; }).length;
+      var html = "";
+      html += cellHtml("RNCs listadas", list.length);
+      html += cellHtml("Em aberto / tratativa", abertas);
+      html += cellHtml("Concluídas", concluidas);
+      html += cellHtml("Total de pedidos com RNC", new Set(list.map(function(item){return item.rnc.pedidoId;})).size);
+      document.getElementById("summary-strip-rnc").innerHTML = html;
+    }
+
+    var overlayRnc = document.getElementById("overlay-rnc");
+    var formRnc = document.getElementById("rnc-form");
+
+    function openRncForm(id){
+      if(pedidos.length===0){
+        alert("Cadastre ao menos um pedido antes de lançar uma RNC.");
+        return;
+      }
+      editingRncId = id || null;
+      refreshRncPedidoSelect();
+      document.getElementById("modal-rnc-title").textContent = id ? "Editar RNC" : "Nova RNC";
+      if(id){
+        var r = rncs.find(function(x){return x.id===id;});
+        document.getElementById("rnc-id").value = r.id;
+        document.getElementById("rnc-pedidoId").value = r.pedidoId;
+        document.getElementById("rnc-dataAbertura").value = r.dataAbertura||"";
+        document.getElementById("rnc-tipo").value = r.tipo||"Outro";
+        document.getElementById("rnc-descricao").value = r.descricao||"";
+        document.getElementById("rnc-responsavel").value = r.responsavel||"";
+        document.getElementById("rnc-status").value = r.status||"Aberta";
+        document.getElementById("rnc-acao").value = r.acaoCorretiva||"";
+        document.getElementById("rnc-dataConclusao").value = r.dataConclusao||"";
+      } else {
+        formRnc.reset();
+        document.getElementById("rnc-id").value = "";
+        document.getElementById("rnc-dataAbertura").value = new Date().toISOString().slice(0,10);
+        refreshRncPedidoSelect();
+      }
+      overlayRnc.classList.add("open");
+    }
+    function closeRncForm(){
+      overlayRnc.classList.remove("open");
+      editingRncId = null;
+    }
+
+    document.getElementById("btn-nova-rnc").addEventListener("click", function(){ openRncForm(null); });
+    document.getElementById("modal-rnc-close").addEventListener("click", closeRncForm);
+    document.getElementById("btn-cancelar-rnc").addEventListener("click", closeRncForm);
+    overlayRnc.addEventListener("click", function(e){ if(e.target===overlayRnc) closeRncForm(); });
+
+    formRnc.addEventListener("submit", function(e){
+      e.preventDefault();
+      var pedidoId = document.getElementById("rnc-pedidoId").value;
+      if(!pedidoId || !findPedido(pedidoId)){
+        alert("Selecione um pedido existente para vincular esta RNC.");
+        return;
+      }
+      var id = document.getElementById("rnc-id").value || uid();
+      var data = {
+        id: id,
+        pedidoId: pedidoId,
+        dataAbertura: document.getElementById("rnc-dataAbertura").value,
+        tipo: document.getElementById("rnc-tipo").value,
+        descricao: document.getElementById("rnc-descricao").value.trim(),
+        responsavel: document.getElementById("rnc-responsavel").value.trim(),
+        status: document.getElementById("rnc-status").value,
+        acaoCorretiva: document.getElementById("rnc-acao").value.trim(),
+        dataConclusao: document.getElementById("rnc-dataConclusao").value
+      };
+      var idx = rncs.findIndex(function(x){return x.id===id;});
+      if(idx>-1){ rncs[idx] = data; } else { rncs.push(data); }
+      persistRnc();
+      closeRncForm();
+      refreshRncFilterOptions();
+      renderTableRnc();
+      renderSummaryRnc();
+    });
+
+    document.getElementById("tbl-rnc-body").addEventListener("click", function(e){
+      var editId = e.target.getAttribute("data-edit-rnc");
+      var delId = e.target.getAttribute("data-del-rnc");
+      if(editId){ openRncForm(editId); }
+      if(delId){
+        if(confirm("Excluir esta RNC?")){
+          rncs = rncs.filter(function(x){return x.id!==delId;});
+          persistRnc();
+          refreshRncFilterOptions();
+          renderTableRnc();
+          renderSummaryRnc();
+        }
+      }
+    });
+
+    document.querySelectorAll("thead th[data-sort-rnc]").forEach(function(th){
+      th.addEventListener("click", function(){
+        var field = th.getAttribute("data-sort-rnc");
+        if(rncSortState.field===field){
+          rncSortState.dir = rncSortState.dir==="asc" ? "desc" : "asc";
+        } else {
+          rncSortState.field = field;
+          rncSortState.dir = "asc";
+        }
+        renderTableRnc();
+      });
+    });
+
+    document.getElementById("rnc-f-texto").addEventListener("input", function(e){
+      rncFilterState.texto = e.target.value; renderTableRnc(); renderSummaryRnc();
+    });
+    document.getElementById("rnc-f-status").addEventListener("change", function(e){
+      rncFilterState.status = e.target.value; renderTableRnc(); renderSummaryRnc();
+    });
+    document.getElementById("rnc-f-projeto").addEventListener("change", function(e){
+      rncFilterState.projeto = e.target.value; renderTableRnc(); renderSummaryRnc();
+    });
+
+    function gerarImpressaoRNC(){
+      var list = getFilteredRnc();
+      var agora = new Date();
+      var filtrosTxt = [];
+      if(rncFilterState.texto) filtrosTxt.push('Busca: "'+rncFilterState.texto+'"');
+      if(rncFilterState.status) filtrosTxt.push("Status: "+rncFilterState.status);
+      if(rncFilterState.projeto) filtrosTxt.push("Projeto: "+rncFilterState.projeto);
+      var filtrosLabel = filtrosTxt.length ? filtrosTxt.join(" · ") : "Sem filtros aplicados — todas as RNCs";
+
+      var header = '<div class="print-header">' +
+        '<h1>Acompanhamento Pedidos de Compra — RNC</h1>' +
+        '<p>Lista de não conformidades — gerada em ' + agora.toLocaleDateString("pt-BR") + ' às ' +
+          agora.toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"}) + '</p>' +
+        '<p>'+esc(filtrosLabel)+'</p>' +
+      '</div>';
+
+      var summary = '<div class="print-summary"><span>'+list.length+' RNC(s)</span></div>';
+
+      var tableHtml;
+      if(list.length===0){
+        tableHtml = '<p class="print-empty">Nenhuma RNC encontrada para os filtros aplicados.</p>';
+      } else {
+        var rows = list.map(function(item){
+          var r = item.rnc;
+          return "<tr>" +
+            "<td>"+fmtDate(r.dataAbertura)+"</td>" +
+            "<td>"+esc(item.pedidoLabel)+"</td>" +
+            "<td>"+esc(item.projeto||"—")+"</td>" +
+            "<td>"+esc(item.fornecedor||"—")+"</td>" +
+            "<td>"+esc(r.tipo||"—")+"</td>" +
+            "<td>"+esc(r.descricao||"—")+"</td>" +
+            "<td>"+esc(r.responsavel||"—")+"</td>" +
+            "<td>"+esc(r.status)+"</td>" +
+            "<td>"+fmtDate(r.dataConclusao)+"</td>" +
+          "</tr>";
+        }).join("");
+        tableHtml = '<table class="print-pedidos-table"><thead><tr>' +
+          '<th>Abertura</th><th>Pedido vinculado</th><th>Projeto</th><th>Fornecedor</th>' +
+          '<th>Tipo</th><th>Descrição</th><th>Responsável</th><th>Status</th><th>Conclusão</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table>';
+      }
+
+      document.getElementById("print-area").innerHTML = header + summary + tableHtml;
+      setTimeout(function(){ window.print(); }, 60);
+    }
+
+    document.getElementById("btn-imprimir-rnc").addEventListener("click", gerarImpressaoRNC);
+
+    // ---------- tabs ----------
+    document.querySelectorAll(".tab-btn").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        document.querySelectorAll(".tab-btn").forEach(function(b){b.classList.remove("active");});
+        document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active");});
+        btn.classList.add("active");
+        document.getElementById("view-"+btn.getAttribute("data-tab")).classList.add("active");
+        if(btn.getAttribute("data-tab")==="relatorio") renderReport();
+        if(btn.getAttribute("data-tab")==="cadastros") renderCadastros();
+        if(btn.getAttribute("data-tab")==="configuracoes") renderUltimoBackupInfo();
+        if(btn.getAttribute("data-tab")==="rnc"){ refreshRncFilterOptions(); renderTableRnc(); renderSummaryRnc(); }
+      });
+    });
+
+    // ---------- cadastros (formas de pagamento / fretes / status) ----------
+    var CAD_CAMPO = { pagamentos:"formaPagamento", fretes:"tipoFrete", status:"status" };
+    var CAD_LIST_EL = { pagamentos:"lista-pagamentos", fretes:"lista-fretes", status:"lista-status" };
+
+    function renderCadastros(){
+      ["pagamentos","fretes"].forEach(function(kind){
+        var ul = document.getElementById(CAD_LIST_EL[kind]);
+        var items = listas[kind];
+        if(items.length===0){
+          ul.innerHTML = '<li class="cad-empty">Nenhum item cadastrado.</li>';
+          return;
+        }
+        ul.innerHTML = items.map(function(item){
+          return '<li>' +
+            '<span class="item-name">'+esc(item)+'</span>' +
+            '<button type="button" class="link danger" data-kind="'+kind+'" data-item="'+esc(item)+'">Excluir</button>' +
+          '</li>';
+        }).join("");
+      });
+
+      var ulStatus = document.getElementById("lista-status");
+      if(listas.status.length===0){
+        ulStatus.innerHTML = '<li class="cad-empty">Nenhum status cadastrado.</li>';
+      } else {
+        ulStatus.innerHTML = listas.status.map(function(s, idx){
+          var c = PALETTE[idx % PALETTE.length];
+          return '<li>' +
+            '<span class="item-left">' +
+              '<span class="sw" style="background:'+c.bg+'"></span>' +
+              '<span class="item-name">'+esc(s.nome)+'</span>' +
+            '</span>' +
+            '<span class="right-actions">' +
+              '<label class="final-toggle">' +
+                '<input type="checkbox" data-final="'+esc(s.nome)+'" '+(s.final?"checked":"")+'> Finalizado' +
+              '</label>' +
+              '<button type="button" class="link danger" data-kind="status" data-item="'+esc(s.nome)+'">Excluir</button>' +
+            '</span>' +
+          '</li>';
+        }).join("");
+      }
+
+      refreshFormSelects();
+      refreshFilterOptions();
+      renderLegend();
+    }
+
+    document.querySelectorAll(".cad-add").forEach(function(formEl){
+      formEl.addEventListener("submit", function(e){
+        e.preventDefault();
+        var kind = formEl.getAttribute("data-list");
+        var input = formEl.querySelector("input");
+        var value = input.value.trim();
+        if(!value) return;
+        if(kind==="status"){
+          if(listas.status.some(function(s){return s.nome.toLowerCase()===value.toLowerCase();})){
+            alert("Este status já está cadastrado.");
+            return;
+          }
+          listas.status.push({nome:value, final:false});
+        } else {
+          if(listas[kind].some(function(x){return x.toLowerCase()===value.toLowerCase();})){
+            alert("Este item já está cadastrado.");
+            return;
+          }
+          listas[kind].push(value);
+        }
+        saveList(kind);
+        input.value = "";
+        renderCadastros();
+        renderTable();
+        renderSummary();
+      });
+    });
+
+    document.querySelector(".cad-grid").addEventListener("click", function(e){
+      var kind = e.target.getAttribute("data-kind");
+      var item = e.target.getAttribute("data-item");
+      if(!kind || item==null) return;
+      var campo = CAD_CAMPO[kind];
+      var emUso = pedidos.some(function(p){return p[campo]===item;});
+      if(emUso && !confirm('Este item está em uso em um ou mais pedidos. Os pedidos existentes manterão o valor atual, mas ele deixará de aparecer na lista de opções. Deseja excluir "'+item+'" mesmo assim?')){
+        return;
+      }
+      if(kind==="status"){
+        listas.status = listas.status.filter(function(s){return s.nome!==item;});
+      } else {
+        listas[kind] = listas[kind].filter(function(x){return x!==item;});
+      }
+      saveList(kind);
+      renderCadastros();
+      renderTable();
+      renderSummary();
+    });
+
+    document.querySelector(".cad-grid").addEventListener("change", function(e){
+      var nome = e.target.getAttribute("data-final");
+      if(nome==null) return;
+      var st = findStatus(nome);
+      if(st){
+        st.final = e.target.checked;
+        saveList("status");
+        renderTable();
+        renderSummary();
+      }
+    });
+
+    // ---------- report ----------
+    var MESES_PT = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+
+    function availableYears(){
+      var years = Array.from(new Set(pedidos.filter(function(p){return p.dataPedido;}).map(function(p){return getYear(p.dataPedido);})));
+      years.sort(function(a,b){return b-a;});
+      if(years.length===0) years = [new Date().getFullYear()];
+      return years;
+    }
+
+    function refreshYearSelect(){
+      var sel = document.getElementById("r-ano");
+      var years = availableYears();
+      var current = sel.value ? Number(sel.value) : years[0];
+      sel.innerHTML = years.map(function(y){return '<option value="'+y+'">'+y+'</option>';}).join("");
+      if(years.indexOf(current)>-1){ sel.value = current; } else { sel.value = years[0]; }
+    }
+
+    function refreshReportProjectSelect(){
+      var sel = document.getElementById("r-projeto");
+      var cur = sel.value;
+      var projetos = Array.from(new Set(pedidos.map(function(p){return p.projeto;}))).filter(Boolean).sort();
+      sel.innerHTML = '<option value="">Todos os projetos</option>' +
+        projetos.map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+'</option>';}).join("");
+      if(projetos.indexOf(cur)>-1) sel.value = cur;
+    }
+
+    function groupFromList(label, list){
+      var previsto = list.reduce(function(s,p){return s+(Number(p.valorPrevisto)||0);},0);
+      var real = list.reduce(function(s,p){return s + (p.valorReal!==""&&p.valorReal!=null?Number(p.valorReal):0);},0);
+      return {label:label, previsto:previsto, real:real};
+    }
+
+    function computeGroups(periodo, year, projeto){
+      var base = pedidos.filter(function(p){
+        if(!p.dataPedido) return false;
+        if(projeto && p.projeto!==projeto) return false;
+        return true;
+      });
+
+      if(periodo==="anual"){
+        var anos = Array.from(new Set(base.map(function(p){return getYear(p.dataPedido);}))).sort(function(a,b){return a-b;});
+        if(anos.length===0) anos = [year];
+        return anos.map(function(y){
+          var sub = base.filter(function(p){return getYear(p.dataPedido)===y;});
+          return groupFromList(String(y), sub);
+        });
+      }
+
+      var doAno = base.filter(function(p){return getYear(p.dataPedido)===year;});
+
+      if(periodo==="mensal"){
+        return MESES_PT.map(function(lab, idx){
+          var sub = doAno.filter(function(p){ return new Date(p.dataPedido+"T00:00:00").getMonth()===idx; });
+          return groupFromList(lab, sub);
+        });
+      }
+      if(periodo==="semestral"){
+        return [1,2].map(function(sem){
+          var sub = doAno.filter(function(p){
+            var m = new Date(p.dataPedido+"T00:00:00").getMonth();
+            return sem===1 ? m<6 : m>=6;
+          });
+          return groupFromList(sem+"º semestre", sub);
+        });
+      }
+      // trimestral
+      return [1,2,3,4].map(function(tri){
+        var sub = doAno.filter(function(p){ return getQuarter(p.dataPedido)===tri; });
+        return groupFromList(tri+"º trimestre", sub);
+      });
+    }
+
+    var PERIODO_LABEL = {mensal:"Mensal", trimestral:"Trimestral", semestral:"Semestral", anual:"Anual"};
+    var COL_LABEL = {mensal:"Mês", trimestral:"Trimestre", semestral:"Semestre", anual:"Ano"};
+
+    function buildReportSection(periodo, year, projeto){
+      var groups = computeGroups(periodo, year, projeto);
+
+      if(groups.length===0 || groups.every(function(g){return g.previsto===0 && g.real===0;})){
+        return { empty:true, periodoLabel: PERIODO_LABEL[periodo] };
+      }
+
+      var totalPrevisto = groups.reduce(function(s,g){return s+g.previsto;},0);
+      var totalReal = groups.reduce(function(s,g){return s+g.real;},0);
+      var totalPct = totalPrevisto>0 ? (totalReal/totalPrevisto*100) : null;
+
+      var rows = groups.map(function(g){
+        var pct = g.previsto>0 ? (g.real/g.previsto*100) : null;
+        var pctLabel = pct===null ? "—" : pct.toFixed(1).replace(".",",")+"%";
+        var diff = g.real - g.previsto;
+        return "<tr>" +
+          "<td class='q-name'>"+esc(g.label)+"</td>" +
+          "<td class='num-col num'>"+brl(g.previsto)+"</td>" +
+          "<td class='num-col num'>"+brl(g.real)+"</td>" +
+          "<td class='num-col num'><span class='pct-badge "+pctClass(pct)+"'>"+pctLabel+"</span></td>" +
+          "<td class='num-col num'>"+(g.previsto>0 || g.real>0 ? brl(diff) : "—")+"</td>" +
+        "</tr>";
+      }).join("");
+
+      var totalLabel = periodo==="anual" ? "Total geral" : ("Total "+year);
+
+      var tableHtml =
+        '<table class="quarter-table"><thead><tr>' +
+          '<th>'+COL_LABEL[periodo]+'</th><th class="num-col">Previsto DRE</th><th class="num-col">Realizado</th>' +
+          '<th class="num-col">% efetivo</th><th class="num-col">Variação (R$)</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody>' +
+        '<tfoot><tr>' +
+          "<td class='q-name'>"+totalLabel+"</td>" +
+          "<td class='num-col num'>"+brl(totalPrevisto)+"</td>" +
+          "<td class='num-col num'>"+brl(totalReal)+"</td>" +
+          "<td class='num-col num'><span class='pct-badge "+pctClass(totalPct)+"'>"+(totalPct===null?"—":totalPct.toFixed(1).replace(".",",")+"%")+"</span></td>" +
+          "<td class='num-col num'>"+brl(totalReal-totalPrevisto)+"</td>" +
+        "</tr></tfoot>" +
+        '</table>';
+
+      var chartHtml = buildChart(groups);
+      var subtitulo = (periodo==="anual" ? "todos os anos" : year) + " · " + (projeto ? "Projeto: "+esc(projeto) : "Todos os projetos");
+
+      return {
+        empty:false,
+        periodoLabel: PERIODO_LABEL[periodo],
+        subtitulo: subtitulo,
+        chartHtml: chartHtml,
+        tableHtml: tableHtml
+      };
+    }
+
+    function renderReport(){
+      refreshYearSelect();
+      refreshReportProjectSelect();
+
+      var periodo = document.getElementById("r-periodo").value;
+      var anoSel = document.getElementById("r-ano");
+      anoSel.disabled = (periodo==="anual");
+      var year = Number(anoSel.value) || new Date().getFullYear();
+      var projeto = document.getElementById("r-projeto").value;
+
+      document.getElementById("report-title").textContent = "Previsto × Realizado — " + PERIODO_LABEL[periodo];
+
+      var container = document.getElementById("report-content");
+
+      if(pedidos.length===0){
+        container.innerHTML = '<div class="note-empty">Cadastre pedidos na aba \u201cPedidos\u201d para gerar o relatório.</div>';
+        return;
+      }
+
+      var sec = buildReportSection(periodo, year, projeto);
+      if(sec.empty){
+        container.innerHTML = '<div class="note-empty">Nenhum pedido encontrado para os filtros selecionados.</div>';
+        return;
+      }
+
+      container.innerHTML =
+        '<div class="chart-wrap">' +
+          '<h3>'+sec.periodoLabel+' — '+sec.subtitulo+'</h3>' +
+          '<div class="legend">' +
+            '<span><span class="sw" style="background:#9aa6ad"></span>Previsto</span>' +
+            '<span><span class="sw" style="background:#35606b"></span>Realizado</span>' +
+          '</div>' +
+          sec.chartHtml +
+        '</div>' +
+        sec.tableHtml;
+    }
+
+    function buildChart(groups){
+      var w = 680, h = 260, padL = 60, padB = 34, padT = 10, padR = 10;
+      var innerW = w - padL - padR, innerH = h - padT - padB;
+      var maxVal = 0;
+      groups.forEach(function(g){ maxVal = Math.max(maxVal, g.previsto, g.real); });
+      if(maxVal<=0) maxVal = 1;
+      var niceMax = Math.ceil(maxVal/4)*4 || 1;
+      var groupW = innerW / groups.length;
+      var barW = Math.max(groupW*0.32, 4);
+      var many = groups.length>6;
+      var pctFont = groups.length<=4 ? 10.5 : (groups.length<=8 ? 9 : 7.5);
+      var labelFont = groups.length<=4 ? 11.5 : (groups.length<=8 ? 10 : 9);
+
+      var gridLines = "";
+      var steps = 4;
+      for(var i=0;i<=steps;i++){
+        var y = padT + innerH - (innerH*i/steps);
+        var val = niceMax*i/steps;
+        gridLines += '<line x1="'+padL+'" y1="'+y+'" x2="'+(w-padR)+'" y2="'+y+'" stroke="#e2ddd0" stroke-width="1"/>';
+        gridLines += '<text x="'+(padL-8)+'" y="'+(y+4)+'" font-size="10" text-anchor="end" fill="#6b6459">'+formatShort(val)+'</text>';
+      }
+
+      var bars = "";
+      groups.forEach(function(g,i){
+        var cx = padL + groupW*i + groupW/2;
+        var hPrev = (g.previsto/niceMax)*innerH;
+        var hReal = (g.real/niceMax)*innerH;
+        var xPrev = cx - barW - 2;
+        var xReal = cx + 2;
+        var yPrev = padT + innerH - hPrev;
+        var yReal = padT + innerH - hReal;
+        bars += '<rect x="'+xPrev+'" y="'+yPrev+'" width="'+barW+'" height="'+Math.max(hPrev,0)+'" fill="#9aa6ad"/>';
+        bars += '<rect x="'+xReal+'" y="'+yReal+'" width="'+barW+'" height="'+Math.max(hReal,0)+'" fill="#35606b"/>';
+        var pct = g.previsto>0 ? (g.real/g.previsto*100) : null;
+        if(pct!==null && !(many && (g.previsto===0 && g.real===0))){
+          bars += '<text x="'+cx+'" y="'+(Math.min(yPrev,yReal)-5)+'" font-size="'+pctFont+'" text-anchor="middle" fill="#1c2b36" font-weight="600">'+pct.toFixed(0)+'%</text>';
+        }
+        bars += '<text x="'+cx+'" y="'+(h-padB+17)+'" font-size="'+labelFont+'" text-anchor="middle" fill="#1c2b36">'+esc(g.label)+'</text>';
+      });
+
+      return '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%; height:auto; max-width:760px; display:block;">' +
+        gridLines + bars +
+        '<line x1="'+padL+'" y1="'+(padT+innerH)+'" x2="'+(w-padR)+'" y2="'+(padT+innerH)+'" stroke="#1c2b36" stroke-width="1.5"/>' +
+      '</svg>';
+    }
+
+    function formatShort(v){
+      if(v>=1000000) return "R$ "+(v/1000000).toFixed(1).replace(".",",")+"M";
+      if(v>=1000) return "R$ "+(v/1000).toFixed(0)+"k";
+      return "R$ "+v.toFixed(0);
+    }
+
+    document.getElementById("r-ano").addEventListener("change", renderReport);
+    document.getElementById("r-periodo").addEventListener("change", renderReport);
+    document.getElementById("r-projeto").addEventListener("change", renderReport);
+
+    // ---------- impressão de relatórios ----------
+    var overlayImprimir = document.getElementById("overlay-imprimir");
+    function abrirModalImprimir(){ overlayImprimir.classList.add("open"); }
+    function fecharModalImprimir(){ overlayImprimir.classList.remove("open"); }
+
+    document.getElementById("btn-abrir-imprimir").addEventListener("click", abrirModalImprimir);
+    document.getElementById("modal-imprimir-close").addEventListener("click", fecharModalImprimir);
+    document.getElementById("btn-cancelar-imprimir").addEventListener("click", fecharModalImprimir);
+    overlayImprimir.addEventListener("click", function(e){ if(e.target===overlayImprimir) fecharModalImprimir(); });
+
+    document.getElementById("form-imprimir").addEventListener("submit", function(e){
+      e.preventDefault();
+      var periodosSelecionados = Array.from(
+        document.querySelectorAll('#form-imprimir input[name="periodo"]:checked')
+      ).map(function(el){ return el.value; });
+
+      if(periodosSelecionados.length===0){
+        alert("Selecione ao menos um tipo de relatório para imprimir.");
+        return;
+      }
+      gerarImpressao(periodosSelecionados);
+      fecharModalImprimir();
+    });
+
+    function gerarImpressao(periodos){
+      var year = Number(document.getElementById("r-ano").value) || new Date().getFullYear();
+      var projeto = document.getElementById("r-projeto").value;
+      var projetoTxt = projeto ? ("Projeto: " + projeto) : "Todos os projetos";
+      var agora = new Date();
+
+      var html = '<div class="print-header">' +
+        '<h1>Acompanhamento Pedidos de Compra</h1>' +
+        '<p>Relatório gerado em ' + agora.toLocaleDateString("pt-BR") + ' às ' +
+          agora.toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"}) +
+          ' — ' + esc(projetoTxt) + '</p>' +
+      '</div>';
+
+      periodos.forEach(function(periodo){
+        var sec = buildReportSection(periodo, year, projeto);
+        html += '<div class="print-block">';
+        if(sec.empty){
+          html += '<h2>'+sec.periodoLabel+'</h2>';
+          html += '<p class="print-empty">Nenhum pedido encontrado para este período com os filtros atuais.</p>';
+        } else {
+          html += '<h2>'+sec.periodoLabel+' — '+sec.subtitulo+'</h2>';
+          html += sec.chartHtml;
+          html += sec.tableHtml;
+        }
+        html += '</div>';
+      });
+
+      var area = document.getElementById("print-area");
+      area.innerHTML = html;
+
+      setTimeout(function(){
+        window.print();
+      }, 60);
+    }
+
+    // ---------- impressão da lista de pedidos (aba Pedidos) ----------
+    function gerarImpressaoPedidos(){
+      var list = getFiltered();
+      var agora = new Date();
+
+      var filtrosTxt = [];
+      if(filterState.texto) filtrosTxt.push('Busca: "'+filterState.texto+'"');
+      if(filterState.status) filtrosTxt.push("Status: "+filterState.status);
+      if(filterState.projeto) filtrosTxt.push("Projeto: "+filterState.projeto);
+      if(filterState.centro) filtrosTxt.push("Centro de custo: "+filterState.centro);
+      var filtrosLabel = filtrosTxt.length ? filtrosTxt.join(" · ") : "Sem filtros aplicados — todos os pedidos";
+
+      var totalPrevisto = list.reduce(function(s,p){return s+(Number(p.valorPrevisto)||0);},0);
+      var totalReal = list.reduce(function(s,p){return s + (p.valorReal!==""&&p.valorReal!=null ? Number(p.valorReal) : 0);},0);
+      var pctGeral = totalPrevisto>0 ? (totalReal/totalPrevisto*100) : null;
+
+      var header = '<div class="print-header">' +
+        '<h1>Acompanhamento Pedidos de Compra</h1>' +
+        '<p>Lista de pedidos — gerada em ' + agora.toLocaleDateString("pt-BR") + ' às ' +
+          agora.toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"}) + '</p>' +
+        '<p>'+esc(filtrosLabel)+'</p>' +
+      '</div>';
+
+      var summary = '<div class="print-summary">' +
+        '<span>'+list.length+' pedido(s)</span>' +
+        '<span>Previsto: '+brl(totalPrevisto)+'</span>' +
+        '<span>Realizado: '+brl(totalReal)+'</span>' +
+        '<span>% realizado: '+(pctGeral===null?"—":pctGeral.toFixed(1).replace(".",",")+"%")+'</span>' +
+      '</div>';
+
+      var tableHtml;
+      if(list.length===0){
+        tableHtml = '<p class="print-empty">Nenhum pedido encontrado para os filtros aplicados.</p>';
+      } else {
+        var rows = list.map(function(p){
+          var pct = pctEfetivo(p.valorPrevisto, p.valorReal);
+          var pctLabel = pct===null ? "—" : pct.toFixed(1).replace(".",",")+"%";
+          var atrasado = isOverdue(p);
+          return "<tr style='"+rowStyle(p)+"'>" +
+            "<td>"+fmtDate(p.dataPedido)+"</td>" +
+            "<td>"+esc(p.numeroPedido)+"</td>" +
+            "<td>"+esc(p.projeto)+"</td>" +
+            "<td>"+esc(p.fornecedor)+"</td>" +
+            "<td>"+esc(p.descricaoItem||"—")+"</td>" +
+            "<td class='num-col'>"+brl(p.valorPrevisto)+"</td>" +
+            "<td class='num-col'>"+(p.valorReal!==""&&p.valorReal!=null?brl(p.valorReal):"—")+"</td>" +
+            "<td class='num-col'>"+pctLabel+"</td>" +
+            "<td>"+fmtDate(p.dataEntrega)+"</td>" +
+            "<td>"+esc(p.formaPagamento||"—")+"</td>" +
+            "<td>"+esc(p.tipoFrete||"—")+"</td>" +
+            "<td>"+esc(p.centroCusto||"—")+"</td>" +
+            "<td>"+esc(p.status)+(atrasado?" (atrasado)":"")+"</td>" +
+          "</tr>";
+        }).join("");
+
+        tableHtml = '<table class="print-pedidos-table"><thead><tr>' +
+          '<th>Data pedido</th><th>Nº pedido</th><th>Projeto</th><th>Fornecedor</th><th>Descrição</th>' +
+          '<th class="num-col">Previsto</th><th class="num-col">Real</th><th class="num-col">Prev.×Real. %</th>' +
+          '<th>Entrega</th><th>Pagamento</th><th>Frete</th><th>Centro de custo</th><th>Status</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table>';
+      }
+
+      document.getElementById("print-area").innerHTML = header + summary + tableHtml;
+
+      setTimeout(function(){
+        window.print();
+      }, 60);
+    }
+
+    document.getElementById("btn-imprimir-pedidos").addEventListener("click", gerarImpressaoPedidos);
+
+    // ---------- backup (.json) ----------
+    var LAST_BACKUP_INFO_KEY = "pdc_last_backup_info";
+    var HANDLE_DB_NAME = "pdc_handles_db";
+    var HANDLE_STORE = "handles";
+    var supportsDir = !!window.showDirectoryPicker;
+    var supportsFS = !!(window.showSaveFilePicker && window.showOpenFilePicker);
+
+    function openHandleDB(){
+      return new Promise(function(resolve, reject){
+        var req = indexedDB.open(HANDLE_DB_NAME, 1);
+        req.onupgradeneeded = function(){ req.result.createObjectStore(HANDLE_STORE); };
+        req.onsuccess = function(){ resolve(req.result); };
+        req.onerror = function(){ reject(req.error); };
+      });
+    }
+    function putHandle(key, handle){
+      return openHandleDB().then(function(db){
+        return new Promise(function(resolve, reject){
+          var tx = db.transaction(HANDLE_STORE, "readwrite");
+          tx.objectStore(HANDLE_STORE).put(handle, key);
+          tx.oncomplete = function(){ resolve(); };
+          tx.onerror = function(){ reject(tx.error); };
+        });
+      });
+    }
+    function getHandle(key){
+      return openHandleDB().then(function(db){
+        return new Promise(function(resolve, reject){
+          var tx = db.transaction(HANDLE_STORE, "readonly");
+          var req = tx.objectStore(HANDLE_STORE).get(key);
+          req.onsuccess = function(){ resolve(req.result || null); };
+          req.onerror = function(){ reject(req.error); };
+        });
+      });
+    }
+
+    function pad2(n){ return (n<10?"0":"")+n; }
+    function timestampSlug(){
+      var d = new Date();
+      return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate())+"_"+pad2(d.getHours())+pad2(d.getMinutes())+pad2(d.getSeconds());
+    }
+
+    function buildBackupData(){
+      return {
+        sistema: "acompanhamento-pedidos-compra",
+        versao: 2,
+        exportadoEm: new Date().toISOString(),
+        pedidos: pedidos,
+        rncs: rncs,
+        pagamentos: listas.pagamentos,
+        fretes: listas.fretes,
+        status: listas.status
+      };
+    }
+
+    function registrarUltimoBackup(nome, pastaNome){
+      try{
+        localStorage.setItem(LAST_BACKUP_INFO_KEY, JSON.stringify({
+          nome: nome,
+          pasta: pastaNome || null,
+          quando: new Date().toISOString()
+        }));
+      }catch(e){}
+      renderUltimoBackupInfo();
+    }
+
+    function renderUltimoBackupInfo(){
+      var el = document.getElementById("ultimo-backup-info");
+      if(!el) return;
+      try{
+        var info = JSON.parse(localStorage.getItem(LAST_BACKUP_INFO_KEY) || "null");
+        if(info && info.nome){
+          var d = new Date(info.quando);
+          var pastaTxt = info.pasta ? (" (pasta: "+info.pasta+")") : "";
+          el.textContent = "Último backup: " + info.nome + pastaTxt + " — " + d.toLocaleDateString("pt-BR") + " às " + d.toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"});
+          return;
+        }
+      }catch(e){}
+      el.textContent = "Nenhum backup salvo neste navegador ainda.";
+    }
+
+    function renderPastaBackupInfo(nome){
+      var el = document.getElementById("pasta-backup-info");
+      if(!el) return;
+      el.textContent = nome
+        ? ("Pasta selecionada: " + nome)
+        : "Nenhuma pasta selecionada — os backups serão salvos onde você indicar a cada vez.";
+    }
+
+    function atualizarLabelPastaAoIniciar(){
+      if(!supportsDir){ renderPastaBackupInfo(null); return; }
+      getHandle("backupDir").then(function(handle){
+        renderPastaBackupInfo(handle ? handle.name : null);
+      }).catch(function(){ renderPastaBackupInfo(null); });
+    }
+
+    // Garante permissão de leitura/escrita numa pasta já escolhida; não pede uma nova.
+    function obterPastaComPermissao(){
+      if(!supportsDir) return Promise.resolve(null);
+      return getHandle("backupDir").then(function(handle){
+        if(!handle) return null;
+        return handle.queryPermission({mode:"readwrite"}).then(function(perm){
+          if(perm==="granted") return handle;
+          return handle.requestPermission({mode:"readwrite"}).then(function(p2){
+            return p2==="granted" ? handle : null;
+          });
+        });
+      }).catch(function(){ return null; });
+    }
+
+    function escolherPastaBackup(){
+      if(!supportsDir){
+        alert("Seu navegador não permite fixar uma pasta para backups. Os arquivos serão baixados para a pasta de downloads padrão.");
+        return Promise.resolve(null);
+      }
+      return window.showDirectoryPicker({mode:"readwrite"}).then(function(handle){
+        return putHandle("backupDir", handle).then(function(){
+          renderPastaBackupInfo(handle.name);
+          return handle;
+        });
+      }).catch(function(err){
+        if(err && err.name!=="AbortError") console.error(err);
+        return null;
+      });
+    }
+
+    function downloadJsonFallback(json, filename){
+      var blob = new Blob([json], {type:"application/json"});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      registrarUltimoBackup(filename, null);
+    }
+
+    function salvarBackup(){
+      var json = JSON.stringify(buildBackupData(), null, 2);
+      var filename = "backup-pedidos-compra_" + timestampSlug() + ".json";
+
+      obterPastaComPermissao().then(function(dirHandle){
+        if(dirHandle){
+          return dirHandle.getFileHandle(filename, {create:true}).then(function(fileHandle){
+            return fileHandle.createWritable().then(function(writable){
+              return writable.write(json).then(function(){ return writable.close(); }).then(function(){
+                registrarUltimoBackup(filename, dirHandle.name);
+              });
+            });
+          });
+        }
+        // sem pasta fixada ainda: se o navegador suporta, oferece escolher uma agora
+        if(supportsDir){
+          return escolherPastaBackup().then(function(handle){
+            if(!handle){ downloadJsonFallback(json, filename); return; }
+            return handle.getFileHandle(filename, {create:true}).then(function(fileHandle){
+              return fileHandle.createWritable().then(function(writable){
+                return writable.write(json).then(function(){ return writable.close(); }).then(function(){
+                  registrarUltimoBackup(filename, handle.name);
+                });
+              });
+            });
+          });
+        }
+        if(supportsFS){
+          return window.showSaveFilePicker({
+            suggestedName: filename,
+            types: [{ description: "Backup JSON", accept: {"application/json": [".json"]} }]
+          }).then(function(handle){
+            return handle.createWritable().then(function(writable){
+              return writable.write(json).then(function(){ return writable.close(); }).then(function(){
+                registrarUltimoBackup(handle.name, null);
+              });
+            });
+          }).catch(function(err){
+            if(err && err.name==="AbortError") return;
+            downloadJsonFallback(json, filename);
+          });
+        }
+        downloadJsonFallback(json, filename);
+      }).catch(function(){
+        downloadJsonFallback(json, filename);
+      });
+    }
+
+    function aplicarBackup(data){
+      if(!data || !Array.isArray(data.pedidos)){
+        alert("Este arquivo não parece ser um backup válido.");
+        return;
+      }
+      if(!confirm("Isso vai substituir todos os pedidos e cadastros atuais pelos dados do backup. Deseja continuar?")) return;
+      pedidos = data.pedidos || [];
+      rncs = Array.isArray(data.rncs) ? data.rncs : [];
+      listas.pagamentos = Array.isArray(data.pagamentos) && data.pagamentos.length ? data.pagamentos : DEFAULT_PAGAMENTOS.slice();
+      listas.fretes = Array.isArray(data.fretes) && data.fretes.length ? data.fretes : DEFAULT_FRETES.slice();
+      listas.status = Array.isArray(data.status) && data.status.length ? data.status : DEFAULT_STATUS.slice();
+      persist();
+      persistRnc();
+      saveList("pagamentos");
+      saveList("fretes");
+      saveList("status");
+      refreshFormSelects();
+      refreshFilterOptions();
+      renderLegend();
+      renderTable();
+      renderSummary();
+      refreshYearSelect();
+      renderReport();
+      renderCadastros();
+      refreshRncFilterOptions();
+      renderTableRnc();
+      renderSummaryRnc();
+      alert("Backup carregado com sucesso.");
+    }
+
+    function carregarUltimoBackup(){
+      obterPastaComPermissao().then(function(dirHandle){
+        var info = null;
+        try{ info = JSON.parse(localStorage.getItem(LAST_BACKUP_INFO_KEY) || "null"); }catch(e){}
+
+        if(dirHandle && info && info.nome && info.pasta===dirHandle.name){
+          return dirHandle.getFileHandle(info.nome).then(function(fileHandle){
+            return fileHandle.getFile().then(function(file){
+              return file.text().then(function(text){ aplicarBackup(JSON.parse(text)); });
+            });
+          }).catch(function(){ return escolherArquivoBackupManual(); });
+        }
+        return escolherArquivoBackupManual();
+      });
+    }
+
+    function escolherArquivoBackupManual(){
+      if(supportsFS){
+        return window.showOpenFilePicker({
+          multiple:false,
+          types: [{ description: "Backup JSON", accept: {"application/json": [".json"]} }]
+        }).then(function(handles){
+          var handle = handles[0];
+          return handle.getFile().then(function(file){
+            return file.text().then(function(text){ aplicarBackup(JSON.parse(text)); });
+          });
+        }).catch(function(err){
+          if(err && err.name==="AbortError") return;
+        });
+      }
+      document.getElementById("backup-file-input").click();
+    }
+
+    document.getElementById("btn-escolher-pasta").addEventListener("click", escolherPastaBackup);
+    document.getElementById("btn-salvar-backup").addEventListener("click", salvarBackup);
+    document.getElementById("btn-carregar-backup").addEventListener("click", carregarUltimoBackup);
+    document.getElementById("backup-file-input").addEventListener("change", function(e){
+      var file = e.target.files[0];
+      if(!file) return;
+      var reader = new FileReader();
+      reader.onload = function(){
+        try{
+          aplicarBackup(JSON.parse(reader.result));
+          registrarUltimoBackup(file.name, null);
+        }catch(err){
+          alert("Não foi possível ler este arquivo como backup JSON.");
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    });
+
+    // ---------- aparência (cor e fonte do sistema) ----------
+    var temaAtual = lerTemaSalvo();
+
+    function salvarTema(){
+      try{ localStorage.setItem(TEMA_KEY, JSON.stringify(temaAtual)); }catch(e){}
+    }
+
+    function renderSwatches(){
+      var row = document.getElementById("swatch-row");
+      row.innerHTML = Object.keys(COLOR_PRESETS).map(function(key){
+        var p = COLOR_PRESETS[key];
+        var sel = key===temaAtual.color ? " selected" : "";
+        return '<button type="button" class="swatch-btn'+sel+'" data-color-key="'+key+'" style="background:'+p.accent+'" title="'+esc(p.label)+'" aria-label="'+esc(p.label)+'"></button>';
+      }).join("");
+    }
+
+    function sincronizarControlesTema(){
+      renderSwatches();
+      document.getElementById("sel-fonte").value = temaAtual.font;
+    }
+
+    document.getElementById("swatch-row").addEventListener("click", function(e){
+      var key = e.target.getAttribute("data-color-key");
+      if(!key) return;
+      temaAtual.color = key;
+      salvarTema();
+      aplicarTemaNoDocumento(temaAtual);
+      renderSwatches();
+    });
+
+    document.getElementById("sel-fonte").addEventListener("change", function(e){
+      temaAtual.font = e.target.value;
+      salvarTema();
+      aplicarTemaNoDocumento(temaAtual);
+    });
+
+    document.getElementById("btn-restaurar-tema").addEventListener("click", function(){
+      temaAtual = { color:"teal", font:"classico" };
+      salvarTema();
+      aplicarTemaNoDocumento(temaAtual);
+      sincronizarControlesTema();
+    });
+
+    // ---------- init ----------
+    document.getElementById("today-label").textContent =
+      "Atualizado em " + new Date().toLocaleDateString("pt-BR", {day:"2-digit",month:"long",year:"numeric"});
+
+    refreshFormSelects();
+    refreshFilterOptions();
+    renderLegend();
+    renderTable();
+    renderSummary();
+    refreshYearSelect();
+    renderReport();
+    refreshRncFilterOptions();
+    renderTableRnc();
+    renderSummaryRnc();
+    renderUltimoBackupInfo();
+    atualizarLabelPastaAoIniciar();
+    sincronizarControlesTema();
+  }
+
+})();
+</script>
+</body>
+</html>
